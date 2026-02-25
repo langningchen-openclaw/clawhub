@@ -317,6 +317,77 @@ describe('skills anti-spam guards', () => {
     )
   })
 
+  it('clears stale suspicious flag when VT later reports clean', async () => {
+    const patch = vi.fn(async () => {})
+    const version = { _id: 'skillVersions:1', skillId: 'skills:1' }
+    const skill = {
+      _id: 'skills:1',
+      slug: 'stale-vt-flag',
+      ownerUserId: 'users:owner',
+      moderationFlags: ['flagged.suspicious'],
+      moderationReason: 'scanner.vt.suspicious',
+    }
+    const owner = {
+      _id: 'users:owner',
+      _creationTime: Date.now() - 2 * 24 * 60 * 60 * 1000,
+      createdAt: Date.now() - 2 * 24 * 60 * 60 * 1000,
+      deletedAt: undefined,
+    }
+
+    const db = {
+      get: vi.fn(async (id: string) => {
+        if (id === 'skills:1') return skill
+        if (id === 'users:owner') return owner
+        return null
+      }),
+      query: vi.fn((table: string) => {
+        const globalStatsQuery = buildGlobalStatsQuery(table)
+        if (globalStatsQuery) return globalStatsQuery
+        if (table === 'skillVersions') {
+          return {
+            withIndex: () => ({
+              unique: async () => version,
+            }),
+          }
+        }
+        if (table === 'skills') {
+          return {
+            withIndex: (name: string) => {
+              if (name === 'by_owner') {
+                return {
+                  order: () => ({
+                    take: async () => [],
+                  }),
+                }
+              }
+              throw new Error(`unexpected skills index ${name}`)
+            },
+          }
+        }
+        throw new Error(`unexpected table ${table}`)
+      }),
+      patch,
+    }
+
+    await approveSkillByHashHandler(
+      { db, scheduler: { runAfter: vi.fn() } } as never,
+      {
+        sha256hash: 'h'.repeat(64),
+        scanner: 'vt',
+        status: 'clean',
+      } as never,
+    )
+
+    expect(patch).toHaveBeenCalledWith(
+      'skills:1',
+      expect.objectContaining({
+        moderationStatus: 'active',
+        moderationReason: 'scanner.vt.clean',
+        moderationFlags: undefined,
+      }),
+    )
+  })
+
   it('bulk-clears suspicious flags/reasons for privileged owner skills', async () => {
     const patch = vi.fn(async () => {})
     const owner = {
