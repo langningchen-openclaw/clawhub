@@ -1795,6 +1795,42 @@ export const backfillDigestOwnerFieldsInternal = internalMutation({
   },
 })
 
+// Backfill latestVersionSummary from skills into existing skillSearchDigest rows.
+// Run:
+//   npx convex run maintenance:backfillDigestVersionSummary '{"batchSize":100}' --prod
+export const backfillDigestVersionSummary = internalMutation({
+  args: {
+    cursor: v.optional(v.string()),
+    batchSize: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const batchSize = clampInt(args.batchSize ?? 200, 10, 500)
+    const { page, continueCursor, isDone } = await ctx.db
+      .query('skillSearchDigest')
+      .paginate({ cursor: args.cursor ?? null, numItems: batchSize })
+
+    let patched = 0
+    for (const digest of page) {
+      if (digest.latestVersionSummary !== undefined) continue
+      const skill = await ctx.db.get(digest.skillId)
+      if (!skill?.latestVersionSummary) continue
+      await ctx.db.patch(digest._id, {
+        latestVersionSummary: skill.latestVersionSummary,
+      })
+      patched++
+    }
+
+    if (!isDone) {
+      await ctx.scheduler.runAfter(0, internal.maintenance.backfillDigestVersionSummary, {
+        cursor: continueCursor,
+        batchSize: args.batchSize,
+      })
+    }
+
+    return { patched, isDone, scanned: page.length }
+  },
+})
+
 function clampInt(value: number, min: number, max: number) {
   const rounded = Math.trunc(value)
   if (!Number.isFinite(rounded)) return min
