@@ -57,7 +57,29 @@ type ListSkillsResult = {
   nextCursor: string | null
 }
 
-type SkillFile = Doc<'skillVersions'>['files'][number]
+type PublicSkillVersionFile = {
+  path: string
+  size: number
+  sha256: string
+  contentType?: string
+}
+
+type PublicSkillVersionParsed = {
+  license?: 'MIT-0'
+  clawdis?: { os?: string[]; nix?: { plugin?: boolean; systems?: string[] } }
+}
+
+type PublicSkillVersionResponse = {
+  _id: Id<'skillVersions'>
+  version: string
+  createdAt?: number
+  changelog?: string
+  changelogSource?: 'auto' | 'user'
+  files: PublicSkillVersionFile[]
+  parsed?: PublicSkillVersionParsed
+  softDeletedAt?: number
+  llmAnalysis?: Doc<'skillVersions'>['llmAnalysis']
+}
 
 type ModerationEvidence = {
   code: string
@@ -92,16 +114,10 @@ type GetBySlugResult = {
     updatedAt: number
     latestVersionId?: Id<'skillVersions'>
   } | null
-  latestVersion: {
-    _id: Id<'skillVersions'>
-    version: string
-    createdAt?: number
-    changelog?: string
-    parsed?: {
-      license?: 'MIT-0'
-      clawdis?: { os?: string[]; nix?: { plugin?: boolean; systems?: string[] } }
-    }
-  } | null
+  latestVersion: Pick<
+    PublicSkillVersionResponse,
+    '_id' | 'version' | 'createdAt' | 'changelog' | 'parsed'
+  > | null
   owner: { _id: Id<'users'>; handle?: string; displayName?: string; image?: string } | null
   moderationInfo?: {
     isPendingScan: boolean
@@ -119,20 +135,7 @@ type GetBySlugResult = {
 } | null
 
 type ListVersionsResult = {
-  items: Array<{
-    version: string
-    createdAt: number
-    changelog: string
-    changelogSource?: 'auto' | 'user'
-    files: Array<{
-      path: string
-      size: number
-      storageId: Id<'_storage'>
-      sha256: string
-      contentType?: string
-    }>
-    softDeletedAt?: number
-  }>
+  items: PublicSkillVersionResponse[]
   nextCursor: string | null
 }
 
@@ -691,10 +694,10 @@ export async function skillsGetRouterV1Handler(ctx: ActionCtx, request: Request)
     const skillResult = (await ctx.runQuery(api.skills.getBySlug, { slug })) as GetBySlugResult
     if (!skillResult?.skill) return text('Skill not found', 404, rate.headers)
 
-    const version = await ctx.runQuery(api.skills.getVersionBySkillAndVersion, {
+    const version = (await ctx.runQuery(api.skills.getVersionBySkillAndVersion, {
       skillId: skillResult.skill._id,
       version: third,
-    })
+    })) as PublicSkillVersionResponse | null
     if (!version) return text('Version not found', 404, rate.headers)
     if (version.softDeletedAt) return text('Version not available', 410, rate.headers)
     const security = buildSkillSecuritySnapshot(version)
@@ -708,7 +711,7 @@ export async function skillsGetRouterV1Handler(ctx: ActionCtx, request: Request)
           changelog: version.changelog,
           changelogSource: version.changelogSource ?? null,
           license: version.parsed?.license ?? null,
-          files: version.files.map((file: SkillFile) => ({
+          files: version.files.map((file) => ({
             path: file.path,
             size: file.size,
             sha256: file.sha256,
@@ -802,7 +805,7 @@ export async function skillsGetRouterV1Handler(ctx: ActionCtx, request: Request)
     const skillResult = (await ctx.runQuery(api.skills.getBySlug, { slug })) as GetBySlugResult
     if (!skillResult?.skill) return text('Skill not found', 404, rate.headers)
 
-    let version = skillResult.skill.latestVersionId
+    let version: Doc<'skillVersions'> | null = skillResult.skill.latestVersionId
       ? await ctx.runQuery(internal.skills.getVersionByIdInternal, {
           versionId: skillResult.skill.latestVersionId,
         })

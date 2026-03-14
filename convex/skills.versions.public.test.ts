@@ -16,6 +16,42 @@ const { getSkillBadgeMap, getSkillBadgeMaps } = await import('./lib/badges')
 const { getBySlug, getVersionById, getVersionBySkillAndVersion, listVersions, listWithLatest } =
   await import('./skills')
 
+type WrappedHandler<TArgs, TResult = unknown> = {
+  _handler: (ctx: unknown, args: TArgs) => Promise<TResult>
+}
+
+const getBySlugHandler = (
+  getBySlug as unknown as WrappedHandler<{
+    slug: string
+  }>
+)._handler
+
+const getVersionByIdHandler = (
+  getVersionById as unknown as WrappedHandler<{
+    versionId: string
+  }>
+)._handler
+
+const getVersionBySkillAndVersionHandler = (
+  getVersionBySkillAndVersion as unknown as WrappedHandler<{
+    skillId: string
+    version: string
+  }>
+)._handler
+
+const listVersionsHandler = (
+  listVersions as unknown as WrappedHandler<{
+    skillId: string
+    limit?: number
+  }>
+)._handler
+
+const listWithLatestHandler = (
+  listWithLatest as unknown as WrappedHandler<{
+    limit?: number
+  }>
+)._handler
+
 function makeVersion() {
   return {
     _id: 'skillVersions:1',
@@ -148,14 +184,20 @@ describe('public skill version queries', () => {
       },
     } as never
 
-    const result = await getBySlug._handler(ctx, { slug: 'demo' } as never)
+    const result = (await getBySlugHandler(ctx, { slug: 'demo' } as never)) as {
+      latestVersion?: {
+        files: Array<Record<string, unknown>>
+        parsed?: Record<string, unknown>
+        staticScan?: { findings?: Array<{ evidence?: string }> }
+      } | null
+    } | null
 
     expect(result?.latestVersion?.files[0]).not.toHaveProperty('storageId')
     expect(result?.latestVersion?.parsed).toEqual({
       clawdis: { os: ['macos'] },
       license: 'MIT-0',
     })
-    expect(result?.latestVersion?.staticScan?.findings[0]?.evidence).toBe('')
+    expect(result?.latestVersion?.staticScan?.findings?.[0]?.evidence).toBe('')
   })
 
   it('sanitizes direct public version queries', async () => {
@@ -177,19 +219,40 @@ describe('public skill version queries', () => {
       },
     } as never
 
-    const byId = await getVersionById._handler(ctx, { versionId: version._id } as never)
-    const byVersion = await getVersionBySkillAndVersion._handler(
+    const byId = (await getVersionByIdHandler(ctx, {
+      versionId: version._id,
+    } as never)) as
+      | {
+          files: Array<Record<string, unknown>>
+          parsed?: Record<string, unknown>
+          staticScan?: { findings?: Array<{ evidence?: string }> }
+        }
+      | null
+    const byVersion = (await getVersionBySkillAndVersionHandler(
       ctx,
       { skillId: 'skills:1', version: '1.0.0' } as never,
-    )
-    const list = await listVersions._handler(ctx, { skillId: 'skills:1', limit: 5 } as never)
+    )) as
+      | {
+          files: Array<Record<string, unknown>>
+          parsed?: Record<string, unknown>
+          staticScan?: { findings?: Array<{ evidence?: string }> }
+        }
+      | null
+    const list = (await listVersionsHandler(ctx, {
+      skillId: 'skills:1',
+      limit: 5,
+    } as never)) as Array<{
+      files: Array<Record<string, unknown>>
+      parsed?: Record<string, unknown>
+      staticScan?: { findings?: Array<{ evidence?: string }> }
+    }>
 
     for (const result of [byId, byVersion, list[0]]) {
       expect(result?.files[0]).not.toHaveProperty('storageId')
       expect(result?.parsed).not.toHaveProperty('frontmatter')
       expect(result?.parsed).not.toHaveProperty('metadata')
       expect(result?.parsed).not.toHaveProperty('moltbot')
-      expect(result?.staticScan?.findings[0]?.evidence).toBe('')
+      expect(result?.staticScan?.findings?.[0]?.evidence).toBe('')
     }
   })
 
@@ -237,7 +300,12 @@ describe('public skill version queries', () => {
       },
     } as never
 
-    const result = await listWithLatest._handler(ctx, { limit: 1 } as never)
+    const result = (await listWithLatestHandler(ctx, { limit: 1 } as never)) as Array<{
+      latestVersion?: {
+        files: Array<Record<string, unknown>>
+        parsed?: Record<string, unknown>
+      } | null
+    }>
     expect(result[0]?.latestVersion?.files[0]).not.toHaveProperty('storageId')
     expect(result[0]?.latestVersion?.parsed).not.toHaveProperty('frontmatter')
   })
