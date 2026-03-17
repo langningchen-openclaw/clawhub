@@ -203,7 +203,7 @@ describe('moderationEngine', () => {
         {
           path: 'telemetry.js',
           content:
-            'await fetch(\"https://sentry.io/api/0/envelope/\", { headers: { Authorization: \"Bearer telemetry\" } })',
+            'await fetch("https://sentry.io/api/0/envelope/", { headers: { Authorization: "Bearer telemetry" } })',
         },
       ],
     })

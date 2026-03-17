@@ -1181,7 +1181,11 @@ describe('httpApiV1 handlers', () => {
   it('returns version detail security from static moderation signals before external scans', async () => {
     const runQuery = vi.fn(async (_query: unknown, args: Record<string, unknown>) => {
       if ('slug' in args) {
-        return { _id: 'skills:1', slug: 'demo', displayName: 'Demo' }
+        return {
+          skill: { _id: 'skills:1', slug: 'demo', displayName: 'Demo' },
+          latestVersion: null,
+          owner: null,
+        }
       }
       if ('skillId' in args && 'version' in args) {
         return {
@@ -1222,7 +1226,11 @@ describe('httpApiV1 handlers', () => {
   it('does not expose version security signals for clean public versions', async () => {
     const runQuery = vi.fn(async (_query: unknown, args: Record<string, unknown>) => {
       if ('slug' in args) {
-        return { _id: 'skills:1', slug: 'demo', displayName: 'Demo' }
+        return {
+          skill: { _id: 'skills:1', slug: 'demo', displayName: 'Demo' },
+          latestVersion: null,
+          owner: null,
+        }
       }
       if ('skillId' in args && 'version' in args) {
         return {
@@ -1269,7 +1277,11 @@ describe('httpApiV1 handlers', () => {
   it('redacts version security signal details for public suspicious versions', async () => {
     const runQuery = vi.fn(async (_query: unknown, args: Record<string, unknown>) => {
       if ('slug' in args) {
-        return { _id: 'skills:1', slug: 'demo', displayName: 'Demo' }
+        return {
+          skill: { _id: 'skills:1', slug: 'demo', displayName: 'Demo' },
+          latestVersion: null,
+          owner: null,
+        }
       }
       if ('skillId' in args && 'version' in args) {
         return {
