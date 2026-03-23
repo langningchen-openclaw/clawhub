@@ -240,7 +240,7 @@ export async function scheduleOwnerPublisherDigestSync(
   ctx: OwnerPublisherDigestScheduleCtx,
   ownerPublisherId: Id<"publishers"> | null | undefined,
 ) {
-  if (!ownerPublisherId) return;
+  if (!ownerPublisherId || !ctx.scheduler) return;
   await ctx.scheduler.runAfter(
     0,
     internal.functions.syncPackageSearchDigestsForOwnerPublisherIdInternal,

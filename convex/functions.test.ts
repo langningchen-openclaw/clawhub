@@ -528,4 +528,10 @@ describe("publisher digest scheduling", () => {
       { ownerPublisherId: "publishers:demo" },
     );
   });
+
+  it("skips scheduling when the trigger context has no scheduler", async () => {
+    await expect(
+      scheduleOwnerPublisherDigestSync({} as never, "publishers:demo" as never),
+    ).resolves.toBeUndefined();
+  });
 });
