@@ -1721,6 +1721,36 @@ describe("packages public queries", () => {
     ).rejects.toThrow(/Package publish payload/i);
   });
 
+  it('rejects package names containing ":" in the publish action path', async () => {
+    const ctx = {
+      runQuery: vi.fn().mockResolvedValue({
+        _id: "users:owner",
+        githubCreatedAt: Date.now() - 20 * 24 * 60 * 60 * 1000,
+      }),
+      runMutation: vi.fn().mockResolvedValue(null),
+      scheduler: {
+        runAfter: vi.fn(),
+      },
+      storage: {
+        get: vi.fn(),
+      },
+    };
+
+    await expect(
+      publishPackageForUserInternalHandler(ctx as never, {
+        actorUserId: "users:owner",
+        payload: {
+          name: "demo:plugin",
+          family: "bundle-plugin",
+          version: "1.0.0",
+          changelog: "init",
+          bundle: { hostTargets: ["desktop"] },
+          files: [],
+        },
+      }),
+    ).rejects.toThrow('cannot contain ":"');
+  });
+
   it("rejects skill publishes on the package endpoint", async () => {
     await expect(
       publishPackageForUserInternalHandler({} as never, {

@@ -91,6 +91,18 @@ describe("plugins publish route", () => {
     expect(route.__path).toBe("/publish-plugin");
   });
 
+  it('shows a validation error when the plugin name contains ":"', async () => {
+    renderPublishRoute();
+
+    fireEvent.change(screen.getByPlaceholderText("Plugin name"), {
+      target: { value: "demo:plugin" },
+    });
+
+    expect(screen.getByText('Plugin name cannot contain ":".')).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Publish" }).getAttribute("disabled")).not.toBeNull();
+    expect(publishRelease).not.toHaveBeenCalled();
+  });
+
   it("publishes a code plugin folder with source metadata and normalized file paths", async () => {
     renderPublishRoute();
 

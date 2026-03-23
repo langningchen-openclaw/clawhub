@@ -79,12 +79,14 @@ function PublishPluginRoute() {
     () => oversizedFiles.slice(0, 3).map((file) => file.name),
     [oversizedFiles],
   );
+  const invalidNameError = name.trim().includes(":") ? 'Plugin name cannot contain ":".' : null;
   const validationError =
-    oversizedFiles.length > 0
+    invalidNameError ??
+    (oversizedFiles.length > 0
       ? `Each file must be 10MB or smaller: ${oversizedFileNames.join(", ")}`
       : totalBytes > MAX_PUBLISH_TOTAL_BYTES
         ? "Total file size exceeds 50MB."
-        : null;
+        : null);
 
   const onPickFiles = async (selected: File[]) => {
     const expanded = await expandFilesWithReport(selected, {

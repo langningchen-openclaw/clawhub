@@ -69,7 +69,7 @@ export function normalizePackageName(name: string) {
   const normalized = trimmed.toLowerCase();
   if (!PACKAGE_NAME_PATTERN.test(normalized)) {
     throw new ConvexError(
-      "Package name must be lowercase and npm-safe (example: @scope/name or plugin-name)",
+      'Package name must be lowercase, npm-safe, and cannot contain ":" (example: @scope/name or plugin-name)',
     );
   }
   return normalized;
