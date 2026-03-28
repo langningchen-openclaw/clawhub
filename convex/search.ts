@@ -116,6 +116,10 @@ function mergeUniqueBySkillId(primary: SkillSearchEntry[], fallback: SkillSearch
   return out;
 }
 
+function isSlugLikeQuery(query: string) {
+  return /^[a-z0-9][a-z0-9-]*$/.test(query.trim().toLowerCase());
+}
+
 export const searchSkills: ReturnType<typeof action> = action({
   args: {
     query: v.string(),
@@ -128,6 +132,13 @@ export const searchSkills: ReturnType<typeof action> = action({
     if (!query) return [];
     const queryTokens = tokenize(query);
     if (queryTokens.length === 0) return [];
+    const exactSlugMatch =
+      isSlugLikeQuery(query)
+        ? ((await ctx.runQuery(internal.search.getExactSkillSlugMatch, {
+            slug: query.toLowerCase(),
+            nonSuspiciousOnly: args.nonSuspiciousOnly,
+          })) as SkillSearchEntry | null)
+        : null;
     let vector: number[];
     try {
       vector = await generateEmbedding(query);
@@ -193,7 +204,7 @@ export const searchSkills: ReturnType<typeof action> = action({
     }
 
     const fallbackMatches =
-      exactMatches.length >= limit
+      exactMatches.length >= limit && !exactSlugMatch
         ? []
         : ((await ctx.runQuery(internal.search.lexicalFallbackSkills, {
             query,
@@ -203,7 +214,10 @@ export const searchSkills: ReturnType<typeof action> = action({
             nonSuspiciousOnly: args.nonSuspiciousOnly,
           })) as SkillSearchEntry[]);
 
-    const mergedMatches = mergeUniqueBySkillId(exactMatches, fallbackMatches);
+    const mergedMatches = mergeUniqueBySkillId(
+      exactSlugMatch ? [exactSlugMatch, ...exactMatches] : exactMatches,
+      fallbackMatches,
+    );
 
     return mergedMatches
       .map((entry) => {
@@ -222,6 +236,33 @@ export const searchSkills: ReturnType<typeof action> = action({
       .filter((entry) => entry.skill)
       .sort((a, b) => b.score - a.score || b.skill.stats.downloads - a.skill.stats.downloads)
       .slice(0, limit);
+  },
+});
+
+export const getExactSkillSlugMatch = internalQuery({
+  args: {
+    slug: v.string(),
+    nonSuspiciousOnly: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args): Promise<SkillSearchEntry | null> => {
+    const skill = await ctx.db
+      .query("skills")
+      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+      .unique();
+    if (!skill || skill.softDeletedAt) return null;
+    if (args.nonSuspiciousOnly && isSkillSuspicious(skill)) return null;
+
+    const getOwnerInfo = makeOwnerInfoGetter(ctx);
+    const resolved = await getOwnerInfo(skill.ownerUserId, skill.ownerPublisherId);
+    const publicSkill = toPublicSkill(skill);
+    if (!publicSkill || !resolved.owner) return null;
+
+    return {
+      skill: publicSkill,
+      version: null,
+      ownerHandle: resolved.ownerHandle,
+      owner: resolved.owner,
+    };
   },
 });
 
