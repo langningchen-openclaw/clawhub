@@ -132,12 +132,16 @@ export const searchSkills: ReturnType<typeof action> = action({
     if (!query) return [];
     const queryTokens = tokenize(query);
     if (queryTokens.length === 0) return [];
-    const exactSlugMatch =
+    const rawExactSlugMatch =
       isSlugLikeQuery(query)
         ? ((await ctx.runQuery(internal.search.getExactSkillSlugMatch, {
             slug: query.toLowerCase(),
             nonSuspiciousOnly: args.nonSuspiciousOnly,
           })) as SkillSearchEntry | null)
+        : null;
+    const exactSlugMatch =
+      rawExactSlugMatch && (!args.highlightedOnly || isSkillHighlighted(rawExactSlugMatch.skill))
+        ? rawExactSlugMatch
         : null;
     let vector: number[];
     try {
@@ -203,8 +207,12 @@ export const searchSkills: ReturnType<typeof action> = action({
       candidateLimit = nextLimit;
     }
 
+    const primaryMatches = exactSlugMatch
+      ? mergeUniqueBySkillId([exactSlugMatch], exactMatches)
+      : exactMatches;
+
     const fallbackMatches =
-      exactMatches.length >= limit && !exactSlugMatch
+      primaryMatches.length >= limit
         ? []
         : ((await ctx.runQuery(internal.search.lexicalFallbackSkills, {
             query,
@@ -212,12 +220,9 @@ export const searchSkills: ReturnType<typeof action> = action({
             limit: Math.min(Math.max(limit * 4, 200), FALLBACK_SCAN_LIMIT),
             highlightedOnly: args.highlightedOnly,
             nonSuspiciousOnly: args.nonSuspiciousOnly,
+            skipExactSlugLookup: true,
           })) as SkillSearchEntry[]);
-
-    const mergedMatches = mergeUniqueBySkillId(
-      exactSlugMatch ? [exactSlugMatch, ...exactMatches] : exactMatches,
-      fallbackMatches,
-    );
+    const mergedMatches = mergeUniqueBySkillId(primaryMatches, fallbackMatches);
 
     return mergedMatches
       .map((entry) => {
@@ -326,6 +331,7 @@ export const lexicalFallbackSkills = internalQuery({
     limit: v.optional(v.number()),
     highlightedOnly: v.optional(v.boolean()),
     nonSuspiciousOnly: v.optional(v.boolean()),
+    skipExactSlugLookup: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<SkillSearchEntry[]> => {
     const limit = Math.min(Math.max(args.limit ?? 200, 10), FALLBACK_SCAN_LIMIT);
@@ -339,7 +345,7 @@ export const lexicalFallbackSkills = internalQuery({
 
     // Exact slug match via the skills table (only one row, cheap).
     const slugQuery = args.query.trim().toLowerCase();
-    if (/^[a-z0-9][a-z0-9-]*$/.test(slugQuery)) {
+    if (!args.skipExactSlugLookup && /^[a-z0-9][a-z0-9-]*$/.test(slugQuery)) {
       const exactSlugSkill = await ctx.db
         .query("skills")
         .withIndex("by_slug", (q) => q.eq("slug", slugQuery))

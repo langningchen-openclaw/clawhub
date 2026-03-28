@@ -236,8 +236,7 @@ describe("search helpers", () => {
     const runQuery = vi
       .fn()
       .mockResolvedValueOnce(exactSlugEntry)
-      .mockResolvedValueOnce(vectorEntries)
-      .mockResolvedValueOnce([]);
+      .mockResolvedValueOnce(vectorEntries);
 
     const result = await searchSkillsHandler(
       {
@@ -251,6 +250,7 @@ describe("search helpers", () => {
 
     expect(result).toHaveLength(10);
     expect(result[0].skill.slug).toBe("skill-downloader");
+    expect(runQuery).toHaveBeenCalledTimes(2);
   });
 
   it("omits exact slug injection when nonSuspiciousOnly excludes it", async () => {
@@ -287,6 +287,151 @@ describe("search helpers", () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].skill.slug).toBe("downloader-1");
+  });
+
+  it("omits exact slug injection when highlightedOnly excludes it", async () => {
+    generateEmbeddingMock.mockResolvedValueOnce([0, 1, 2]);
+
+    const exactSlugEntry = {
+      skill: makePublicSkill({
+        id: "skills:exact",
+        slug: "skill-downloader",
+        displayName: "Skill Downloader",
+        downloads: 1,
+      }),
+      version: null,
+      ownerHandle: "yyang100",
+      owner: null,
+    };
+
+    const vectorEntries = [
+      {
+        embeddingId: "skillEmbeddings:1",
+        skill: {
+          ...makePublicSkill({
+            id: "skills:1",
+            slug: "downloader-1",
+            displayName: "Downloader 1",
+            downloads: 50,
+          }),
+          badges: { highlighted: { byUserId: "users:mod", at: 1 } },
+        },
+        version: null,
+        ownerHandle: "owner",
+        owner: null,
+      },
+    ];
+
+    const runQuery = vi
+      .fn()
+      .mockResolvedValueOnce(exactSlugEntry)
+      .mockResolvedValueOnce(vectorEntries)
+      .mockResolvedValueOnce([]);
+
+    const result = await searchSkillsHandler(
+      {
+        vectorSearch: vi.fn().mockResolvedValue([{ _id: "skillEmbeddings:1", _score: 0.9 }]),
+        runQuery,
+      },
+      { query: "skill-downloader", limit: 10, highlightedOnly: true },
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0].skill.slug).toBe("downloader-1");
+  });
+
+  it("deduplicates exact slug injection against vector exact matches", async () => {
+    generateEmbeddingMock.mockResolvedValueOnce([0, 1, 2]);
+
+    const sharedSkill = makePublicSkill({
+      id: "skills:exact",
+      slug: "skill-downloader",
+      displayName: "Skill Downloader",
+      downloads: 100,
+    });
+    const exactSlugEntry = {
+      skill: sharedSkill,
+      version: null,
+      ownerHandle: "yyang100",
+      owner: null,
+    };
+    const vectorEntries = [
+      {
+        embeddingId: "skillEmbeddings:exact",
+        skill: sharedSkill,
+        version: null,
+        ownerHandle: "yyang100",
+        owner: null,
+      },
+      {
+        embeddingId: "skillEmbeddings:other",
+        skill: makePublicSkill({
+          id: "skills:other",
+          slug: "downloader-2",
+          displayName: "Downloader 2",
+          downloads: 50,
+        }),
+        version: null,
+        ownerHandle: "owner",
+        owner: null,
+      },
+    ];
+
+    const runQuery = vi
+      .fn()
+      .mockResolvedValueOnce(exactSlugEntry)
+      .mockResolvedValueOnce(vectorEntries)
+      .mockResolvedValueOnce([]);
+
+    const result = await searchSkillsHandler(
+      {
+        vectorSearch: vi.fn().mockResolvedValue([
+          { _id: "skillEmbeddings:exact", _score: 0.95 },
+          { _id: "skillEmbeddings:other", _score: 0.8 },
+        ]),
+        runQuery,
+      },
+      { query: "skill-downloader", limit: 10 },
+    );
+
+    expect(result).toHaveLength(2);
+    expect(result.filter((entry) => entry.skill._id === "skills:exact")).toHaveLength(1);
+  });
+
+  it("skips duplicate slug lookup inside lexical fallback when search action already did it", async () => {
+    generateEmbeddingMock.mockResolvedValueOnce([0, 1, 2]);
+
+    const fallbackEntries = [
+      {
+        skill: makePublicSkill({
+          id: "skills:orf",
+          slug: "orf",
+          displayName: "ORF",
+        }),
+        version: null,
+        ownerHandle: "steipete",
+        owner: null,
+      },
+    ];
+
+    const runQuery = vi
+      .fn()
+      .mockResolvedValueOnce(null)
+      .mockImplementationOnce(async (_ref: unknown, args: { skipExactSlugLookup?: boolean }) => {
+        expect(args.skipExactSlugLookup).toBe(true);
+        return fallbackEntries;
+      });
+
+    const result = await searchSkillsHandler(
+      {
+        vectorSearch: vi.fn().mockResolvedValue([]),
+        runQuery,
+      },
+      { query: "orf", limit: 10 },
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0].skill.slug).toBe("orf");
   });
 
   it("filters suspicious vector results in hydrateResults when requested", async () => {
