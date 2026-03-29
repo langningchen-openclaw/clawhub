@@ -305,7 +305,7 @@ describe("clawhub e2e", () => {
         "clawhub",
         "package",
         "publish",
-        "encircleacity2/claw-plugin-byteplus-modelark",
+        "pwrdrvr/openclaw-codex-app-server",
         "--dry-run",
         "--site",
         site,
@@ -321,7 +321,7 @@ describe("clawhub e2e", () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toMatch(/Dry run/i);
-    expect(result.stdout).toMatch(/byteplus-modelark/);
+    expect(result.stdout).toMatch(/openclaw-codex-app-server/);
     expect(result.stdout).toMatch(/code-plugin/i);
     expect(result.stdout).toMatch(/openclaw\.plugin\.json/);
   }, 30_000);
@@ -335,7 +335,7 @@ describe("clawhub e2e", () => {
         "clawhub",
         "package",
         "publish",
-        "encircleacity2/claw-plugin-byteplus-modelark",
+        "pwrdrvr/openclaw-codex-app-server",
         "--dry-run",
         "--json",
         "--site",
@@ -352,7 +352,7 @@ describe("clawhub e2e", () => {
 
     expect(result.status).toBe(0);
     const output = JSON.parse(result.stdout.trim()) as Record<string, unknown>;
-    expect(String(output.name)).toMatch(/byteplus-modelark/);
+    expect(String(output.name)).toMatch(/openclaw-codex-app-server/);
     expect(output.family).toBe("code-plugin");
     expect(Number(output.files)).toBeGreaterThan(0);
     expect(output).not.toHaveProperty("releaseId");

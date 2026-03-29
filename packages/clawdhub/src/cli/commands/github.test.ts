@@ -4,8 +4,9 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
-import { afterEach, describe, expect, it } from "vitest";
-import { resolveLocalGitInfo, resolveSourceInput } from "./github";
+import { zipSync } from "fflate";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { fetchGitHubSource, resolveLocalGitInfo, resolveSourceInput } from "./github";
 
 async function makeTmpDir() {
   return await mkdtemp(join(tmpdir(), "clawhub-github-test-"));
@@ -23,7 +24,7 @@ function runGit(cwd: string, args: string[]) {
 }
 
 afterEach(() => {
-  // no-op hook keeps the file shape consistent with the command test suite
+  vi.restoreAllMocks();
 });
 
 describe("github publish source helpers", () => {
@@ -176,6 +177,62 @@ describe("github publish source helpers", () => {
       expect(resolveLocalGitInfo(folder)).toBeNull();
     } finally {
       await rm(workdir, { recursive: true, force: true });
+    }
+  });
+
+  it("extracts GitHub archives that contain explicit directory entries", async () => {
+    const archiveBytes = zipSync({
+      "repo-root/.agents/": new Uint8Array(),
+      "repo-root/.agents/config.json": new TextEncoder().encode('{"ok":true}\n'),
+      "repo-root/package.json": new TextEncoder().encode('{"name":"demo","version":"1.0.0"}\n'),
+      "repo-root/openclaw.plugin.json": new TextEncoder().encode('{"id":"demo","configSchema":{"type":"object"}}\n'),
+    });
+
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ default_branch: "main" }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ sha: "0123456789abcdef0123456789abcdef01234567" }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(archiveBytes, {
+          status: 200,
+          headers: { "content-type": "application/zip" },
+        }),
+      );
+    const originalFetch = globalThis.fetch;
+    Object.defineProperty(globalThis, "fetch", {
+      value: fetchMock,
+      configurable: true,
+      writable: true,
+    });
+
+    const fetched = await fetchGitHubSource({
+      kind: "github",
+      owner: "owner",
+      repo: "repo",
+      path: ".",
+      url: "https://github.com/owner/repo",
+    });
+
+    try {
+      expect(await Bun.file(join(fetched.dir, ".agents", "config.json")).text()).toContain('"ok":true');
+      expect(await Bun.file(join(fetched.dir, "package.json")).text()).toContain('"name":"demo"');
+    } finally {
+      await fetched.cleanup();
+      Object.defineProperty(globalThis, "fetch", {
+        value: originalFetch,
+        configurable: true,
+        writable: true,
+      });
     }
   });
 });

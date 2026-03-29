@@ -347,6 +347,7 @@ function filterEntriesForSubpath(entries: Record<string, Uint8Array>, subpath: s
 
 async function writeEntries(root: string, entries: Record<string, Uint8Array>) {
   for (const [path, bytes] of Object.entries(entries)) {
+    if (!path || path.endsWith("/")) continue;
     const absPath = join(root, ...path.split("/"));
     await mkdir(dirname(absPath), { recursive: true });
     await writeFile(absPath, Buffer.from(bytes));
