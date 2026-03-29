@@ -9,11 +9,11 @@ export const Route = createFileRoute("/settings")({
   component: Settings,
 });
 
-function Settings() {
+export function Settings() {
   const me = useQuery(api.users.me);
   const updateProfile = useMutation(api.users.updateProfile);
   const deleteAccount = useMutation(api.users.deleteAccount);
-  const tokens = useQuery(api.tokens.listMine) as
+  const tokens = useQuery(api.tokens.listMine, me ? {} : "skip") as
     | Array<{
         _id: Id<"apiTokens">;
         label: string;
