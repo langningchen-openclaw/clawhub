@@ -23,7 +23,7 @@ describe("Settings", () => {
 
     render(<Settings />);
 
-    expect(screen.getByText(/sign in to access settings\./i)).toBeInTheDocument();
+    expect(screen.getByText(/sign in to access settings\./i)).toBeTruthy();
     expect(useQueryMock.mock.calls.some(([, args]) => args === "skip")).toBe(true);
   });
 });
