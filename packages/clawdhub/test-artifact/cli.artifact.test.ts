@@ -63,10 +63,30 @@ describe("built CLI artifact", () => {
         name: "@openclaw/demo-plugin",
         displayName: "Demo Plugin",
         version: "1.0.0",
+        openclaw: {
+          compat: {
+            pluginApi: ">=2026.3.24-beta.2",
+            minGatewayVersion: "2026.3.24-beta.2",
+          },
+          build: {
+            openclawVersion: "2026.3.24-beta.2",
+            pluginSdkVersion: "2026.3.24-beta.2",
+          },
+        },
       }),
       "utf8",
     );
-    await writeFile(join(pluginDir, "openclaw.plugin.json"), JSON.stringify({ id: "demo.plugin" }), "utf8");
+    await writeFile(
+      join(pluginDir, "openclaw.plugin.json"),
+      JSON.stringify({
+        id: "demo.plugin",
+        configSchema: {
+          type: "object",
+          additionalProperties: false,
+        },
+      }),
+      "utf8",
+    );
     await writeFile(join(pluginDir, "src", "index.ts"), "export const demo = true;\n", "utf8");
 
     runGit(root, ["init"]);

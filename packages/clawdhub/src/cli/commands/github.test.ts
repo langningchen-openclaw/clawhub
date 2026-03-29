@@ -1,6 +1,6 @@
 /* @vitest-environment node */
 
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -224,8 +224,10 @@ describe("github publish source helpers", () => {
     });
 
     try {
-      expect(await Bun.file(join(fetched.dir, ".agents", "config.json")).text()).toContain('"ok":true');
-      expect(await Bun.file(join(fetched.dir, "package.json")).text()).toContain('"name":"demo"');
+      expect(await readFile(join(fetched.dir, ".agents", "config.json"), "utf8")).toContain(
+        '"ok":true',
+      );
+      expect(await readFile(join(fetched.dir, "package.json"), "utf8")).toContain('"name":"demo"');
     } finally {
       await fetched.cleanup();
       Object.defineProperty(globalThis, "fetch", {
