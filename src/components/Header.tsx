@@ -2,7 +2,7 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { Link } from "@tanstack/react-router";
 import { Menu, Monitor, Moon, Sun } from "lucide-react";
 import { useMemo, useRef } from "react";
-import { getUserFacingConvexError } from "../lib/convexError";
+import { getUserFacingAuthError } from "../lib/authErrorMessage";
 import { gravatarUrl } from "../lib/gravatar";
 import { isModerator } from "../lib/roles";
 import { getClawHubSiteUrl, getSiteMode, getSiteName } from "../lib/site";
@@ -314,9 +314,7 @@ export default function Header() {
                     "github",
                     signInRedirectTo ? { redirectTo: signInRedirectTo } : undefined,
                   ).catch((error) => {
-                    setAuthError(
-                      getUserFacingConvexError(error, "Sign in failed. Please try again."),
-                    );
+                    setAuthError(getUserFacingAuthError(error, "Sign in failed. Please try again."));
                   });
                 }}
               >

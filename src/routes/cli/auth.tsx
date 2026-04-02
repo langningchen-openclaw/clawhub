@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../../../convex/_generated/api";
-import { getUserFacingConvexError } from "../../lib/convexError";
+import { getUserFacingAuthError } from "../../lib/authErrorMessage";
 import { getClawHubSiteUrl, normalizeClawHubSiteOrigin } from "../../lib/site";
 import { setAuthError, useAuthError } from "../../lib/useAuthError";
 import { useAuthStatus } from "../../lib/useAuthStatus";
@@ -137,7 +137,7 @@ function CliAuth() {
                 "github",
                 signInRedirectTo ? { redirectTo: signInRedirectTo } : undefined,
               ).catch((error) => {
-                setAuthError(getUserFacingConvexError(error, "Sign in failed. Please try again."));
+                setAuthError(getUserFacingAuthError(error, "Sign in failed. Please try again."));
               });
             }}
           >
