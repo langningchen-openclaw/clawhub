@@ -4,6 +4,7 @@ import { SkillCard } from "../../components/SkillCard";
 import { getPlatformLabels } from "../../components/skillDetailUtils";
 import { SkillMetricsRow, SkillStatsTripletLine } from "../../components/SkillStats";
 import { UserBadge } from "../../components/UserBadge";
+import { VerifiedPublisherBadge } from "../../components/VerifiedPublisherBadge";
 import { getSkillBadges } from "../../lib/badges";
 import { buildSkillHref, type SkillListEntry } from "./-types";
 
@@ -57,6 +58,7 @@ export function SkillsResults({
                 skill={skill}
                 href={skillHref}
                 badge={getSkillBadges(skill)}
+                verifiedPublisher={Boolean(entry.owner?.trustedPublisher)}
                 chip={isPlugin ? "Plugin bundle (nix)" : undefined}
                 platformLabels={platforms.length ? platforms : undefined}
                 summaryFallback="Agent-ready skill pack."
@@ -94,6 +96,7 @@ export function SkillsResults({
                 <span className="skills-table-name">
                   <span>
                     {skill.displayName}
+                    {entry.owner?.trustedPublisher ? <VerifiedPublisherBadge compact /> : null}
                     {getSkillBadges(skill).map((badge) => (
                       <span key={badge} className="tag tag-compact">{badge}</span>
                     ))}

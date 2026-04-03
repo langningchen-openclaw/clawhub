@@ -1980,6 +1980,16 @@ code {
   color: #ffd0bf;
 }
 
+.verified-publisher-badge {
+  background: rgba(59, 130, 246, 0.14);
+  color: #2563eb;
+}
+
+[data-theme="dark"] .verified-publisher-badge {
+  background: rgba(96, 165, 250, 0.18);
+  color: #bfdbfe;
+}
+
 .skill-actions {
   display: flex;
   gap: 10px;

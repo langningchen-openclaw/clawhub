@@ -13,6 +13,7 @@ import { getRuntimeEnv } from "../lib/runtimeEnv";
 import { SkillInstallCard } from "./SkillInstallCard";
 import { type LlmAnalysis, SecurityScanResults } from "./SkillSecurityScanResults";
 import { UserBadge } from "./UserBadge";
+import { VerifiedPublisherBadge } from "./VerifiedPublisherBadge";
 
 export type SkillModerationInfo = {
   isPendingScan: boolean;
@@ -231,6 +232,7 @@ export function SkillHeader({
                     size="md"
                     showName
                   />
+                  {owner?.trustedPublisher ? <VerifiedPublisherBadge compact /> : null}
                   {forkOf && forkOfHref ? (
                     <>
                       <span style={{ color: "var(--ink-soft)", opacity: 0.4 }}>·</span>

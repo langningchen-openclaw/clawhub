@@ -102,6 +102,7 @@ describe("skills.getBySlug", () => {
         displayName: "Demo Owner",
         image: null,
         bio: "Ships demo skills",
+        trustedPublisher: true,
         email: "owner@example.com",
         emailVerificationTime: 123,
         githubCreatedAt: 456,
@@ -121,6 +122,7 @@ describe("skills.getBySlug", () => {
       image: null,
       bio: "Ships demo skills",
       linkedUserId: "users:1",
+      trustedPublisher: true,
     });
     expect(result?.owner).not.toHaveProperty("email");
     expect(result?.owner).not.toHaveProperty("emailVerificationTime");
