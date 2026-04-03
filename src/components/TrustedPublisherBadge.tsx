@@ -1,17 +1,17 @@
-type VerifiedPublisherBadgeProps = {
+type TrustedPublisherBadgeProps = {
   compact?: boolean;
 };
 
-export function VerifiedPublisherBadge({ compact = false }: VerifiedPublisherBadgeProps) {
+export function TrustedPublisherBadge({ compact = false }: TrustedPublisherBadgeProps) {
   return (
-    <span className={`tag verified-publisher-badge${compact ? " tag-compact" : ""}`}>
+    <span className={`tag trusted-publisher-badge${compact ? " tag-compact" : ""}`}>
       <svg
         width="16"
         height="16"
         viewBox="0 0 16 16"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        aria-label="Verified publisher"
+        aria-label="Trusted publisher"
         style={{ flexShrink: 0 }}
       >
         <path
@@ -26,7 +26,7 @@ export function VerifiedPublisherBadge({ compact = false }: VerifiedPublisherBad
           strokeLinejoin="round"
         />
       </svg>
-      Verified publisher
+      Trusted publisher
     </span>
   );
 }

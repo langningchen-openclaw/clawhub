@@ -1,14 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import type { PublicSkill } from "../lib/publicUser";
-import { VerifiedPublisherBadge } from "./VerifiedPublisherBadge";
+import { TrustedPublisherBadge } from "./TrustedPublisherBadge";
 
 type SkillCardProps = {
   skill: PublicSkill;
   badge?: string | string[];
   chip?: string;
   platformLabels?: string[];
-  verifiedPublisher?: boolean;
+  trustedPublisher?: boolean;
   summaryFallback: string;
   meta: ReactNode;
   href?: string;
@@ -19,7 +19,7 @@ export function SkillCard({
   badge,
   chip,
   platformLabels,
-  verifiedPublisher = false,
+  trustedPublisher = false,
   summaryFallback,
   meta,
   href,
@@ -27,13 +27,13 @@ export function SkillCard({
   const owner = encodeURIComponent(String(skill.ownerUserId));
   const link = href ?? `/${owner}/${skill.slug}`;
   const badges = Array.isArray(badge) ? badge : badge ? [badge] : [];
-  const hasTags = badges.length || chip || platformLabels?.length || verifiedPublisher;
+  const hasTags = badges.length || chip || platformLabels?.length || trustedPublisher;
 
   return (
     <Link to={link} className="card skill-card">
       {hasTags ? (
         <div className="skill-card-tags">
-          {verifiedPublisher ? <VerifiedPublisherBadge compact /> : null}
+          {trustedPublisher ? <TrustedPublisherBadge compact /> : null}
           {badges.map((label) => (
             <div key={label} className="tag">
               {label}

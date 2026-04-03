@@ -1980,12 +1980,12 @@ code {
   color: #ffd0bf;
 }
 
-.verified-publisher-badge {
+.trusted-publisher-badge {
   background: rgba(59, 130, 246, 0.14);
   color: #2563eb;
 }
 
-[data-theme="dark"] .verified-publisher-badge {
+[data-theme="dark"] .trusted-publisher-badge {
   background: rgba(96, 165, 250, 0.18);
   color: #bfdbfe;
 }

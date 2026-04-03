@@ -45,23 +45,23 @@ const skill = {
   updatedAt: 0,
 };
 
-describe("SkillCard verified publisher badge", () => {
-  it("renders the verified publisher badge when the owner is trusted", () => {
+describe("SkillCard trusted publisher badge", () => {
+  it("renders the trusted publisher badge when the owner is trusted", () => {
     render(
       <SkillCard
         skill={skill}
-        verifiedPublisher
+        trustedPublisher
         summaryFallback="Fallback summary"
         meta={<div>meta</div>}
       />,
     );
 
-    expect(screen.getByText("Verified publisher")).toBeTruthy();
+    expect(screen.getByText("Trusted publisher")).toBeTruthy();
   });
 
-  it("omits the verified publisher badge for untrusted owners", () => {
+  it("omits the trusted publisher badge for untrusted owners", () => {
     render(<SkillCard skill={skill} summaryFallback="Fallback summary" meta={<div>meta</div>} />);
 
-    expect(screen.queryByText("Verified publisher")).toBeNull();
+    expect(screen.queryByText("Trusted publisher")).toBeNull();
   });
 });
