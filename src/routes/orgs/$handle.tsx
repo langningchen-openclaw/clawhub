@@ -81,6 +81,7 @@ function OrgProfile() {
               href={`/${encodeURIComponent(publisher.handle)}/${encodeURIComponent(skill.slug)}`}
               badge={getSkillBadges(skill)}
               trustedPublisher={Boolean(publisher.trustedPublisher)}
+              verifiedPublisher={Boolean(publisher.verifiedPublisher)}
               summaryFallback="Agent-ready skill pack."
               meta={
                 <div className="stat">

@@ -124,6 +124,7 @@ function UserProfile() {
                   skill={skill}
                   badge={getSkillBadges(skill)}
                   trustedPublisher={Boolean(user.trustedPublisher)}
+                  verifiedPublisher={Boolean(user.verifiedPublisher)}
                   summaryFallback="Agent-ready skill pack."
                   meta={
                     <div className="stat">

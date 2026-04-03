@@ -11,6 +11,7 @@ export type PublicUser = Pick<
   | "image"
   | "bio"
   | "trustedPublisher"
+  | "verifiedPublisher"
 >;
 
 export type PublicPublisher = Pick<
@@ -24,6 +25,7 @@ export type PublicPublisher = Pick<
   | "bio"
   | "linkedUserId"
   | "trustedPublisher"
+  | "verifiedPublisher"
 >;
 
 export type PublicSkill = Pick<
@@ -106,6 +108,7 @@ export function toPublicUser(user: Doc<"users"> | null | undefined): PublicUser 
     image: user.image,
     bio: user.bio,
     trustedPublisher: user.trustedPublisher,
+    verifiedPublisher: user.verifiedPublisher,
   };
 }
 
@@ -123,6 +126,7 @@ export function toPublicPublisher(
     bio: publisher.bio,
     linkedUserId: publisher.linkedUserId,
     trustedPublisher: publisher.trustedPublisher,
+    verifiedPublisher: publisher.verifiedPublisher,
   };
 }
 

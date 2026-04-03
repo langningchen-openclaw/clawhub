@@ -14,6 +14,7 @@ import { SkillInstallCard } from "./SkillInstallCard";
 import { type LlmAnalysis, SecurityScanResults } from "./SkillSecurityScanResults";
 import { TrustedPublisherBadge } from "./TrustedPublisherBadge";
 import { UserBadge } from "./UserBadge";
+import { VerifiedPublisherBadge } from "./VerifiedPublisherBadge";
 
 export type SkillModerationInfo = {
   isPendingScan: boolean;
@@ -232,6 +233,7 @@ export function SkillHeader({
                     size="md"
                     showName
                   />
+                  {owner?.verifiedPublisher ? <VerifiedPublisherBadge compact /> : null}
                   {owner?.trustedPublisher ? <TrustedPublisherBadge compact /> : null}
                   {forkOf && forkOfHref ? (
                     <>

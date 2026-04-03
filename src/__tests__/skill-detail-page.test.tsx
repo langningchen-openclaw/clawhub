@@ -99,6 +99,7 @@ describe("SkillDetailPage", () => {
               displayName: "Peter",
               linkedUserId: ownerId,
               trustedPublisher: true,
+              verifiedPublisher: true,
             },
             latestVersion: {
               _id: versionId,
@@ -132,6 +133,7 @@ describe("SkillDetailPage", () => {
     expect(screen.queryByText(/Loading skill/i)).toBeNull();
     expect(await screen.findByRole("heading", { name: "Weather" })).toBeTruthy();
     expect(screen.getByText(/Get current weather\./i)).toBeTruthy();
+    expect(screen.getByText("Verified publisher")).toBeTruthy();
     expect(screen.getByText("Trusted publisher")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Files" })).toBeTruthy();
   });

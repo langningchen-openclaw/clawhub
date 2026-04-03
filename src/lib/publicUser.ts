@@ -10,6 +10,7 @@ export type PublicUser = Pick<
   | "image"
   | "bio"
   | "trustedPublisher"
+  | "verifiedPublisher"
 >;
 
 export type PublicPublisher = Pick<
@@ -23,6 +24,7 @@ export type PublicPublisher = Pick<
   | "bio"
   | "linkedUserId"
   | "trustedPublisher"
+  | "verifiedPublisher"
 >;
 
 export type PublicSkill = Pick<
