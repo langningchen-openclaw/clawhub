@@ -1,11 +1,23 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
-import { useRef } from "react";
+import { Search } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
 import { api } from "../../../convex/_generated/api";
+import { BrowseSidebar } from "../../components/BrowseSidebar";
+import { SKILL_CATEGORIES } from "../../lib/categories";
+import { formatCompactStat } from "../../lib/numberFormat";
 import { parseSort } from "./-params";
 import { SkillsResults } from "./-SkillsResults";
-import { SkillsToolbar } from "./-SkillsToolbar";
 import { useSkillsBrowseModel, type SkillsSearchState } from "./-useSkillsBrowseModel";
+
+const SORT_OPTIONS = [
+  { value: "downloads", label: "Most downloaded" },
+  { value: "stars", label: "Most starred" },
+  { value: "installs", label: "Most installed" },
+  { value: "updated", label: "Recently updated" },
+  { value: "newest", label: "Newest" },
+  { value: "name", label: "Name" },
+];
 
 export const Route = createFileRoute("/skills/")({
   validateSearch: (search): SkillsSearchState => {
@@ -53,7 +65,8 @@ export function SkillsIndex() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const totalSkills = useQuery(api.skills.countPublicSkills);
   const totalSkillsText =
-    typeof totalSkills === "number" ? totalSkills.toLocaleString("en-US") : null;
+    typeof totalSkills === "number" ? formatCompactStat(totalSkills) : null;
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const model = useSkillsBrowseModel({
     navigate,
@@ -61,48 +74,111 @@ export function SkillsIndex() {
     searchInputRef,
   });
 
+  const sortOptionsWithRelevance = model.hasQuery
+    ? [{ value: "relevance", label: "Relevance" }, ...SORT_OPTIONS]
+    : SORT_OPTIONS;
+
+  const handleFilterToggle = useCallback(
+    (key: string) => {
+      if (key === "highlighted") model.onToggleHighlighted();
+      else if (key === "nonSuspicious") model.onToggleNonSuspicious();
+    },
+    [model.onToggleHighlighted, model.onToggleNonSuspicious],
+  );
+
+  const handleCategoryChange = useCallback(
+    (slug: string | undefined) => {
+      if (slug) {
+        const cat = SKILL_CATEGORIES.find((c) => c.slug === slug);
+        if (cat?.keywords[0]) {
+          model.onQueryChange(cat.keywords[0]);
+        }
+      } else {
+        model.onQueryChange("");
+      }
+    },
+    [model.onQueryChange],
+  );
+
   return (
-    <main className="section">
-      <header className="skills-header-top">
-        <h1 className="section-title" style={{ marginBottom: 8 }}>
+    <main className="browse-page">
+      <div className="browse-page-header">
+        <h1 className="browse-title">
           Skills
-          {totalSkillsText && <span style={{ opacity: 0.55 }}>{` (${totalSkillsText})`}</span>}
+          {totalSkillsText ? (
+            <span className="browse-count">{totalSkillsText}</span>
+          ) : null}
         </h1>
-        <p className="section-subtitle" style={{ marginBottom: 0 }}>
-          {model.isLoadingSkills
-            ? "Loading skills…"
-            : `Browse the skill library${model.activeFilters.length ? ` (${model.activeFilters.join(", ")})` : ""}.`}
-        </p>
-      </header>
-      <div className="skills-container">
-        <SkillsToolbar
-          searchInputRef={searchInputRef}
-          query={model.query}
-          hasQuery={model.hasQuery}
-          sort={model.sort}
-          dir={model.dir}
-          view={model.view}
-          highlightedOnly={model.highlightedOnly}
-          nonSuspiciousOnly={model.nonSuspiciousOnly}
-          onQueryChange={model.onQueryChange}
-          onToggleHighlighted={model.onToggleHighlighted}
-          onToggleNonSuspicious={model.onToggleNonSuspicious}
+        <button
+          className="browse-sidebar-toggle"
+          type="button"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          aria-label="Toggle filters"
+        >
+          Filters
+        </button>
+      </div>
+      <div className="browse-page-search">
+        <Search size={15} className="navbar-search-icon" aria-hidden="true" />
+        <input
+          ref={searchInputRef}
+          className="browse-search-input"
+          value={model.query}
+          onChange={(event) => model.onQueryChange(event.target.value)}
+          placeholder="Search skills..."
+        />
+      </div>
+      <div className={`browse-layout${sidebarOpen ? " sidebar-open" : ""}`}>
+        <BrowseSidebar
+          categories={SKILL_CATEGORIES}
+          activeCategory={undefined}
+          onCategoryChange={handleCategoryChange}
+          sortOptions={sortOptionsWithRelevance}
+          activeSort={model.sort}
           onSortChange={model.onSortChange}
-          onToggleDir={model.onToggleDir}
-          onToggleView={model.onToggleView}
+          filters={[
+            { key: "highlighted", label: "Staff picks", active: model.highlightedOnly },
+            { key: "nonSuspicious", label: "Hide suspicious", active: model.nonSuspiciousOnly },
+          ]}
+          onFilterToggle={handleFilterToggle}
         />
-        <SkillsResults
-          isLoadingSkills={model.isLoadingSkills}
-          sorted={model.sorted}
-          view={model.view}
-          listDoneLoading={!model.isLoadingSkills && !model.canLoadMore && !model.isLoadingMore}
-          hasQuery={model.hasQuery}
-          canLoadMore={model.canLoadMore}
-          isLoadingMore={model.isLoadingMore}
-          canAutoLoad={model.canAutoLoad}
-          loadMoreRef={model.loadMoreRef}
-          loadMore={model.loadMore}
-        />
+        <div className="browse-results">
+          <div className="browse-results-toolbar">
+            <span className="browse-results-count">
+              {model.isLoadingSkills
+                ? "Loading..."
+                : `${model.sorted.length} results`}
+            </span>
+            <div className="browse-view-toggle">
+              <button
+                className={`browse-view-btn${model.view === "list" ? " is-active" : ""}`}
+                type="button"
+                onClick={model.view === "cards" ? model.onToggleView : undefined}
+              >
+                List
+              </button>
+              <button
+                className={`browse-view-btn${model.view === "cards" ? " is-active" : ""}`}
+                type="button"
+                onClick={model.view === "list" ? model.onToggleView : undefined}
+              >
+                Cards
+              </button>
+            </div>
+          </div>
+          <SkillsResults
+            isLoadingSkills={model.isLoadingSkills}
+            sorted={model.sorted}
+            view={model.view}
+            listDoneLoading={!model.isLoadingSkills && !model.canLoadMore && !model.isLoadingMore}
+            hasQuery={model.hasQuery}
+            canLoadMore={model.canLoadMore}
+            isLoadingMore={model.isLoadingMore}
+            canAutoLoad={model.canAutoLoad}
+            loadMoreRef={model.loadMoreRef}
+            loadMore={model.loadMore}
+          />
+        </div>
       </div>
     </main>
   );

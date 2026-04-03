@@ -66,7 +66,7 @@ describe("SkillsIndex", () => {
   it("renders an empty state when no skills are returned", async () => {
     render(<SkillsIndex />);
     await act(async () => {});
-    expect(screen.getByText("No skills match that filter.")).toBeTruthy();
+    expect(screen.getByText("No skills found")).toBeTruthy();
   });
 
   it("shows loading state before fetch completes", async () => {
@@ -74,9 +74,9 @@ describe("SkillsIndex", () => {
     convexHttpMock.query.mockReturnValue(new Promise(() => {}));
     render(<SkillsIndex />);
     await act(async () => {});
-    // Header subtitle and results area both show "Loading skills…"
-    expect(screen.getAllByText("Loading skills…").length).toBeGreaterThanOrEqual(1);
-    expect(screen.queryByText("No skills match that filter.")).toBeNull();
+    // Header subtitle and results area both show loading text
+    expect(screen.getAllByText(/Loading/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText("No skills found")).toBeNull();
   });
 
   it("shows empty state immediately when search returns no results", async () => {
@@ -91,8 +91,8 @@ describe("SkillsIndex", () => {
     });
 
     // Should show empty state, not loading
-    expect(screen.getByText("No skills match that filter.")).toBeTruthy();
-    expect(screen.queryByText("Loading skills…")).toBeNull();
+    expect(screen.getByText("No skills found")).toBeTruthy();
+    expect(screen.queryByText(/Loading skills/)).toBeNull();
   });
 
   it("skips list fetch and calls search when query is set", async () => {
@@ -136,7 +136,7 @@ describe("SkillsIndex", () => {
 
     render(<SkillsIndex />);
 
-    const input = screen.getByPlaceholderText("Filter by name, slug, or summary…");
+    const input = screen.getByPlaceholderText("Search skills...");
     await act(async () => {
       fireEvent.change(input, { target: { value: "cli-design-framework" } });
       await vi.runAllTimersAsync();
@@ -161,7 +161,7 @@ describe("SkillsIndex", () => {
 
     render(<SkillsIndex />);
 
-    const input = screen.getByPlaceholderText("Filter by name, slug, or summary…");
+    const input = screen.getByPlaceholderText("Search skills...");
     await act(async () => {
       fireEvent.change(input, { target: { value: "cli-design-framework" } });
       await vi.runAllTimersAsync();
@@ -252,7 +252,7 @@ describe("SkillsIndex", () => {
     });
 
     const titles = Array.from(
-      document.querySelectorAll(".skills-table-name > span:first-child"),
+      document.querySelectorAll(".skill-list-item-name"),
     ).map((node) => node.textContent);
 
     expect(titles[0]).toBe("Older High Score");
@@ -323,7 +323,7 @@ describe("SkillsIndex", () => {
       fireEvent.click(loadMoreButton);
     });
 
-    expect(screen.getByText("Loading…")).toBeTruthy();
+    expect(screen.getByText(/Loading/)).toBeTruthy();
   });
 });
 

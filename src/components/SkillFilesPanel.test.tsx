@@ -9,14 +9,6 @@ vi.mock("convex/react", () => ({
   useAction: () => getFileTextMock,
 }));
 
-vi.mock("react-markdown", () => ({
-  default: ({ children }: { children: string }) => <div>{children}</div>,
-}));
-
-vi.mock("remark-gfm", () => ({
-  default: {},
-}));
-
 type SkillFile = Doc<"skillVersions">["files"][number];
 
 function makeFile(path: string, size: number): SkillFile {
@@ -38,8 +30,6 @@ describe("SkillFilesPanel", () => {
     render(
       <SkillFilesPanel
         versionId={"skillVersions:1" as Id<"skillVersions">}
-        readmeContent={"# skill"}
-        readmeError={null}
         latestFiles={[makeFile("scripts/run.sh", 10)]}
       />,
     );
@@ -72,8 +62,6 @@ describe("SkillFilesPanel", () => {
     render(
       <SkillFilesPanel
         versionId={"skillVersions:1" as Id<"skillVersions">}
-        readmeContent={"# skill"}
-        readmeError={null}
         latestFiles={[makeFile("a.txt", 5), makeFile("b.txt", 6)]}
       />,
     );

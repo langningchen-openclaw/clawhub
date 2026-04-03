@@ -7,6 +7,7 @@ import Header from "../components/Header";
 
 vi.mock("@tanstack/react-router", () => ({
   Link: (props: { children: ReactNode }) => <a href="/">{props.children}</a>,
+  useNavigate: () => vi.fn(),
 }));
 
 vi.mock("@convex-dev/auth/react", () => ({
@@ -61,6 +62,24 @@ vi.mock("../lib/convexError", () => ({
 
 vi.mock("../lib/gravatar", () => ({
   gravatarUrl: vi.fn(),
+}));
+
+vi.mock("../convex/client", () => ({
+  convexHttp: {
+    query: vi.fn().mockResolvedValue(0),
+  },
+}));
+
+vi.mock("../../convex/_generated/api", () => ({
+  api: {
+    skills: {
+      countPublicSkills: "countPublicSkills",
+    },
+  },
+}));
+
+vi.mock("../lib/numberFormat", () => ({
+  formatCompactStat: (n: number) => String(n),
 }));
 
 vi.mock("../components/ui/dropdown-menu", () => ({

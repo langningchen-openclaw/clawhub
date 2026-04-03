@@ -1,6 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Search } from "lucide-react";
 import { useEffect, useState } from "react";
+import { BrowseSidebar } from "../../components/BrowseSidebar";
 import { fetchPluginCatalog, type PackageListItem } from "../../lib/packageApi";
 import { familyLabel } from "../../lib/packageLabels";
 
@@ -38,18 +39,22 @@ export const Route = createFileRoute("/plugins/")({
   }),
   loaderDeps: ({ search }) => search,
   loader: async ({ deps }) => {
-    const data = await fetchPluginCatalog({
-      q: deps.q,
-      cursor: deps.q ? undefined : deps.cursor,
-      family: deps.family,
-      isOfficial: deps.verified,
-      executesCode: deps.executesCode,
-      limit: 50,
-    });
-    return {
-      items: data.items,
-      nextCursor: data.nextCursor,
-    } satisfies PluginsLoaderData;
+    try {
+      const data = await fetchPluginCatalog({
+        q: deps.q,
+        cursor: deps.q ? undefined : deps.cursor,
+        family: deps.family,
+        isOfficial: deps.verified,
+        executesCode: deps.executesCode,
+        limit: 50,
+      });
+      return {
+        items: data.items ?? [],
+        nextCursor: data.nextCursor ?? null,
+      } satisfies PluginsLoaderData;
+    } catch {
+      return { items: [], nextCursor: null } satisfies PluginsLoaderData;
+    }
   },
   component: PluginsIndex,
 });
@@ -57,8 +62,8 @@ export const Route = createFileRoute("/plugins/")({
 function VerifiedBadge() {
   return (
     <svg
-      width="16"
-      height="16"
+      width="14"
+      height="14"
       viewBox="0 0 16 16"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -85,47 +90,68 @@ export function PluginsIndex() {
   const navigate = Route.useNavigate();
   const { items, nextCursor } = Route.useLoaderData() as PluginsLoaderData;
   const [query, setQuery] = useState(search.q ?? "");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     setQuery(search.q ?? "");
   }, [search.q]);
 
-  return (
-    <main className="section">
-      <header className="skills-header-top">
-        <h1 className="section-title" style={{ marginBottom: 8 }}>
-          Plugins
-        </h1>
-        <p className="section-subtitle" style={{ marginBottom: 0 }}>
-          Browse the plugin catalog.
-        </p>
-      </header>
+  const handleFilterToggle = (key: string) => {
+    if (key === "verified") {
+      void navigate({
+        search: (prev) => ({
+          ...prev,
+          cursor: undefined,
+          verified: prev.verified ? undefined : true,
+        }),
+      });
+    } else if (key === "executesCode") {
+      void navigate({
+        search: (prev) => ({
+          ...prev,
+          cursor: undefined,
+          executesCode: prev.executesCode ? undefined : true,
+        }),
+      });
+    }
+  };
 
-      <div className="skills-toolbar">
-        <div className="plugins-toolbar-top">
-          <form
-            className="skills-search"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void navigate({
-                search: (prev) => ({
-                  ...prev,
-                  cursor: undefined,
-                  q: query.trim() || undefined,
-                }),
-              });
-            }}
+  const handleFamilySort = (value: string) => {
+    const family =
+      value === "code-plugin" || value === "bundle-plugin" ? value : undefined;
+    void navigate({
+      search: (prev) => ({
+        ...prev,
+        cursor: undefined,
+        family: family as "code-plugin" | "bundle-plugin" | undefined,
+      }),
+    });
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    void navigate({
+      search: (prev) => ({
+        ...prev,
+        cursor: undefined,
+        q: query.trim() || undefined,
+      }),
+    });
+  };
+
+  return (
+    <main className="browse-page">
+      <div className="browse-page-header">
+        <h1 className="browse-title">Plugins</h1>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <button
+            className="browse-sidebar-toggle"
+            type="button"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label="Toggle filters"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ opacity: 0.5, flexShrink: 0 }}>
-              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
-            </svg>
-            <input
-              className="skills-search-input"
-              placeholder="Search plugins…"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          </form>
+            Filters
+          </button>
           <Link
             className="btn btn-primary"
             to="/publish-plugin"
@@ -138,122 +164,95 @@ export function PluginsIndex() {
               sourceRepo: undefined,
             }}
           >
-            Publish Plugin
+            Publish
           </Link>
         </div>
-        <div className="skills-toolbar-row">
-          <div className="plugins-type-tabs" role="group" aria-label="Filter by type">
-            {([
-              { value: undefined, label: "All" },
-              { value: "code-plugin" as const, label: "Code" },
-              { value: "bundle-plugin" as const, label: "Bundles" },
-            ]).map((opt) => (
-              <button
-                key={opt.label}
-                className={`plugins-type-tab${(search.family ?? undefined) === opt.value ? " is-active" : ""}`}
-                type="button"
-                aria-pressed={(search.family ?? undefined) === opt.value}
-                onClick={() => {
-                  void navigate({
-                    search: (prev) => ({
-                      ...prev,
-                      cursor: undefined,
-                      q: query.trim() || undefined,
-                      family: opt.value,
-                    }),
-                  });
-                }}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-          <button
-            className="search-filter-button"
-            type="button"
-            aria-pressed={search.verified ?? false}
-            onClick={() => {
-              void navigate({
-                search: (prev) => ({
-                  ...prev,
-                  cursor: undefined,
-                  q: query.trim() || undefined,
-                  verified: prev.verified ? undefined : true,
-                }),
-              });
-            }}
-          >
-            <VerifiedBadge /> Verified
-          </button>
-          <button
-            className="search-filter-button"
-            type="button"
-            aria-pressed={search.executesCode ?? false}
-            onClick={() => {
-              void navigate({
-                search: (prev) => ({
-                  ...prev,
-                  cursor: undefined,
-                  q: query.trim() || undefined,
-                  executesCode: prev.executesCode ? undefined : true,
-                }),
-              });
-            }}
-          >
-            Executes code
-          </button>
-        </div>
       </div>
-
-      {items.length === 0 ? (
-        <div className="card">No plugins match that filter.</div>
-      ) : (
-        <>
-          <div className="grid">
-            {items.map((item) => (
-              <Link
-                key={item.name}
-                to="/plugins/$name"
-                params={{ name: item.name }}
-                className="card skill-card"
-              >
-                <div className="skill-card-tags">
-                  <span className="tag tag-compact">{familyLabel(item.family)}</span>
-                  {item.isOfficial ? (
-                    <span className="tag tag-compact tag-accent">
-                      <VerifiedBadge /> Verified
-                    </span>
-                  ) : null}
-                </div>
-                <h3 className="skill-card-title">{item.displayName}</h3>
-                <p className="skill-card-summary">
-                  {item.summary ?? "No summary provided."}
-                </p>
-                <div className="skill-card-footer" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span className="stat">
-                    {item.ownerHandle ? `by ${item.ownerHandle}` : "community"}
-                  </span>
-                  {item.latestVersion ? (
-                    <span className="stat">v{item.latestVersion}</span>
-                  ) : null}
-                </div>
-              </Link>
-            ))}
+      <form className="browse-page-search" onSubmit={handleSearch}>
+        <Search size={15} className="navbar-search-icon" aria-hidden="true" />
+        <input
+          className="browse-search-input"
+          placeholder="Search plugins..."
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+      </form>
+      <div className={`browse-layout${sidebarOpen ? " sidebar-open" : ""}`}>
+        <BrowseSidebar
+          sortOptions={[
+            { value: "all", label: "All types" },
+            { value: "code-plugin", label: "Code plugins" },
+            { value: "bundle-plugin", label: "Bundle plugins" },
+          ]}
+          activeSort={search.family ?? "all"}
+          onSortChange={handleFamilySort}
+          filters={[
+            { key: "verified", label: "Verified only", active: search.verified ?? false },
+            { key: "executesCode", label: "Executes code", active: search.executesCode ?? false },
+          ]}
+          onFilterToggle={handleFilterToggle}
+        />
+        <div className="browse-results">
+          <div className="browse-results-toolbar">
+            <span className="browse-results-count">
+              {items.length} plugin{items.length !== 1 ? "s" : ""}
+            </span>
           </div>
+
+          {items.length === 0 ? (
+            <div className="empty-state">
+              <p className="empty-state-title">No plugins found</p>
+              <p className="empty-state-body">Try a different search term or remove filters.</p>
+            </div>
+          ) : (
+            <div className="results-list">
+              {items.map((item) => (
+                <Link
+                  key={item.name}
+                  to="/plugins/$name"
+                  params={{ name: item.name }}
+                  className="skill-list-item"
+                >
+                  <div className="skill-list-item-main">
+                    {item.ownerHandle ? (
+                      <>
+                        <span className="skill-list-item-owner">@{item.ownerHandle}</span>
+                        <span className="skill-list-item-sep">/</span>
+                      </>
+                    ) : null}
+                    <span className="skill-list-item-name">{item.displayName}</span>
+                    <span className="tag tag-compact">{familyLabel(item.family)}</span>
+                    {item.isOfficial ? (
+                      <span className="tag tag-compact tag-accent">
+                        <VerifiedBadge /> Verified
+                      </span>
+                    ) : null}
+                  </div>
+                  {item.summary ? (
+                    <p className="skill-list-item-summary">{item.summary}</p>
+                  ) : null}
+                  <div className="skill-list-item-meta">
+                    {item.latestVersion ? (
+                      <span className="skill-list-item-meta-item">v{item.latestVersion}</span>
+                    ) : null}
+                    <span className="skill-list-item-meta-item">
+                      {item.ownerHandle ? item.ownerHandle : "community"}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+
           {!search.q && (search.cursor || nextCursor) ? (
-            <div
-              style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 22 }}
-            >
+            <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 22 }}>
               {search.cursor ? (
                 <button
                   className="btn"
                   type="button"
                   onClick={() => {
                     void navigate({
-                      search: (prev) => ({
-                        ...prev,
-                        cursor: undefined,
-                      }),
+                      search: (prev) => ({ ...prev, cursor: undefined }),
                     });
                   }}
                 >
@@ -266,10 +265,7 @@ export function PluginsIndex() {
                   type="button"
                   onClick={() => {
                     void navigate({
-                      search: (prev) => ({
-                        ...prev,
-                        cursor: nextCursor,
-                      }),
+                      search: (prev) => ({ ...prev, cursor: nextCursor }),
                     });
                   }}
                 >
@@ -278,8 +274,8 @@ export function PluginsIndex() {
               ) : null}
             </div>
           ) : null}
-        </>
-      )}
+        </div>
+      </div>
     </main>
   );
 }

@@ -1,4 +1,6 @@
 import { lazy, Suspense } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { Doc, Id } from "../../convex/_generated/dataModel";
 import { SkillVersionsPanel } from "./SkillVersionsPanel";
 
@@ -12,9 +14,11 @@ const SkillFilesPanel = lazy(() =>
 
 type SkillFile = Doc<"skillVersions">["files"][number];
 
+export type DetailTab = "readme" | "files" | "compare" | "versions";
+
 type SkillDetailTabsProps = {
-  activeTab: "files" | "compare" | "versions";
-  setActiveTab: (tab: "files" | "compare" | "versions") => void;
+  activeTab: DetailTab;
+  setActiveTab: (tab: DetailTab) => void;
   onCompareIntent: () => void;
   readmeContent: string | null;
   readmeError: string | null;
@@ -47,6 +51,13 @@ export function SkillDetailTabs({
     <div className="card tab-card">
       <div className="tab-header">
         <button
+          className={`tab-button${activeTab === "readme" ? " is-active" : ""}`}
+          type="button"
+          onClick={() => setActiveTab("readme")}
+        >
+          README
+        </button>
+        <button
           className={`tab-button${activeTab === "files" ? " is-active" : ""}`}
           type="button"
           onClick={() => setActiveTab("files")}
@@ -77,12 +88,31 @@ export function SkillDetailTabs({
         </button>
       </div>
 
+      {activeTab === "readme" ? (
+        <div className="tab-body">
+          {readmeContent ? (
+            <div className="markdown">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{readmeContent}</ReactMarkdown>
+            </div>
+          ) : readmeError ? (
+            <div className="empty-state" style={{ padding: "var(--space-6) var(--space-4)" }}>
+              <p className="empty-state-title">No README available</p>
+              <p className="empty-state-body">
+                This skill doesn't have a SKILL.md file yet.
+              </p>
+            </div>
+          ) : (
+            <div className="stat" style={{ padding: 16 }}>
+              Loading README...
+            </div>
+          )}
+        </div>
+      ) : null}
+
       {activeTab === "files" ? (
-        <Suspense fallback={<div className="tab-body stat">Loading file viewer…</div>}>
+        <Suspense fallback={<div className="tab-body stat">Loading file viewer...</div>}>
           <SkillFilesPanel
             versionId={latestVersionId}
-            readmeContent={readmeContent}
-            readmeError={readmeError}
             latestFiles={latestFiles}
           />
         </Suspense>
@@ -90,7 +120,7 @@ export function SkillDetailTabs({
 
       {activeTab === "compare" ? (
         <div className="tab-body">
-          <Suspense fallback={<div className="stat">Loading diff viewer…</div>}>
+          <Suspense fallback={<div className="stat">Loading diff viewer...</div>}>
             <SkillDiffCard skill={skill} versions={diffVersions ?? []} variant="embedded" />
           </Suspense>
         </div>

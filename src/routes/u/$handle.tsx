@@ -3,9 +3,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { api } from "../../../convex/_generated/api";
 import type { Doc } from "../../../convex/_generated/dataModel";
-import { SkillCard } from "../../components/SkillCard";
-import { SkillStatsTripletLine } from "../../components/SkillStats";
-import { getSkillBadges } from "../../lib/badges";
+import { SkillListItem } from "../../components/SkillListItem";
 import type { PublicSkill, PublicUser } from "../../lib/publicUser";
 
 export const Route = createFileRoute("/u/$handle")({
@@ -65,14 +63,18 @@ function UserProfile() {
   const published = publishedSkills ?? [];
 
   return (
-    <main className="section">
-      <div className="card settings-profile" style={{ marginBottom: 22 }}>
-        <div className="settings-avatar" aria-hidden="true">
+    <main className="browse-page">
+      <div className="profile-header">
+        <div className="profile-avatar-lg" aria-hidden="true">
           {avatar ? <img src={avatar} alt="" /> : <span>{initial}</span>}
         </div>
-        <div className="settings-profile-body">
-          <div className="settings-name">{displayName}</div>
-          <div className="settings-handle">@{displayHandle}</div>
+        <div className="profile-info">
+          <h1 className="profile-display-name">{displayName}</h1>
+          <span className="profile-handle">@{displayHandle}</span>
+          <div className="profile-stats-row">
+            <span className="profile-stat">{published.length} published</span>
+            <span className="profile-stat">{skills.length} stars</span>
+          </div>
         </div>
       </div>
 
@@ -85,7 +87,7 @@ function UserProfile() {
             aria-selected={tab === "stars"}
             onClick={() => setTab("stars")}
           >
-            Stars
+            Overview
           </button>
           <button
             className={tab === "installed" ? "profile-tab is-active" : "profile-tab"}
@@ -107,58 +109,38 @@ function UserProfile() {
         />
       ) : (
         <>
-          <h2 className="section-title" style={{ fontSize: "1.3rem" }}>
-            Published
-          </h2>
-          <p className="section-subtitle">Skills published by this user.</p>
-
-          {isLoadingPublished ? (
-            <div className="card">
-              <div className="loading-indicator">Loading published skills…</div>
-            </div>
-          ) : published.length > 0 ? (
-            <div className="grid" style={{ marginBottom: 18 }}>
-              {published.map((skill) => (
-                <SkillCard
-                  key={skill._id}
-                  skill={skill}
-                  badge={getSkillBadges(skill)}
-                  summaryFallback="Agent-ready skill pack."
-                  meta={
-                    <div className="stat">
-                      <SkillStatsTripletLine stats={skill.stats} />
-                    </div>
-                  }
-                />
-              ))}
-            </div>
+          {published.length > 0 ? (
+            <>
+              <h2 className="home-section-title" style={{ marginBottom: 12 }}>
+                Published ({published.length})
+              </h2>
+              {isLoadingPublished ? (
+                <div className="card">
+                  <div className="loading-indicator">Loading published skills...</div>
+                </div>
+              ) : (
+                <div className="results-list" style={{ marginBottom: 24 }}>
+                  {published.map((skill) => (
+                    <SkillListItem key={skill._id} skill={skill} />
+                  ))}
+                </div>
+              )}
+            </>
           ) : null}
 
-          <h2 className="section-title" style={{ fontSize: "1.3rem" }}>
-            Stars
+          <h2 className="home-section-title" style={{ marginBottom: 12 }}>
+            Stars ({skills.length})
           </h2>
-          <p className="section-subtitle">Skills this user has starred.</p>
-
           {isLoadingSkills ? (
             <div className="card">
-              <div className="loading-indicator">Loading stars…</div>
+              <div className="loading-indicator">Loading stars...</div>
             </div>
           ) : skills.length === 0 ? (
             <div className="card">No stars yet.</div>
           ) : (
-            <div className="grid">
+            <div className="results-list">
               {skills.map((skill) => (
-                <SkillCard
-                  key={skill._id}
-                  skill={skill}
-                  badge={getSkillBadges(skill)}
-                  summaryFallback="Agent-ready skill pack."
-                  meta={
-                    <div className="stat">
-                      <SkillStatsTripletLine stats={skill.stats} />
-                    </div>
-                  }
-                />
+                <SkillListItem key={skill._id} skill={skill} />
               ))}
             </div>
           )}

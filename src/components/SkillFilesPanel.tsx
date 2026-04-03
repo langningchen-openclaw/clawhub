@@ -1,7 +1,5 @@
 import { useAction } from "convex/react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { api } from "../../convex/_generated/api";
 import type { Doc, Id } from "../../convex/_generated/dataModel";
 import { formatBytes } from "./skillDetailUtils";
@@ -10,15 +8,11 @@ type SkillFile = Doc<"skillVersions">["files"][number];
 
 type SkillFilesPanelProps = {
   versionId: Id<"skillVersions"> | null;
-  readmeContent: string | null;
-  readmeError: string | null;
   latestFiles: SkillFile[];
 };
 
 export function SkillFilesPanel({
   versionId,
-  readmeContent,
-  readmeError,
   latestFiles,
 }: SkillFilesPanelProps) {
   const getFileText = useAction(api.skills.getFileText);
@@ -92,20 +86,6 @@ export function SkillFilesPanel({
 
   return (
     <div className="tab-body">
-      <div>
-        <h2 className="section-title" style={{ fontSize: "1.2rem", margin: 0 }}>
-          SKILL.md
-        </h2>
-        <div className="markdown">
-          {readmeContent ? (
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{readmeContent}</ReactMarkdown>
-          ) : readmeError ? (
-            <div className="stat">Failed to load SKILL.md: {readmeError}</div>
-          ) : (
-            <div>Loading…</div>
-          )}
-        </div>
-      </div>
       <div className="file-browser">
         <div className="file-list">
           <div className="file-list-header">

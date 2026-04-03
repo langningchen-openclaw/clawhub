@@ -10,7 +10,6 @@ import { getSkillBadges } from "../lib/badges";
 import { formatCompactStat, formatSkillStatsTriplet } from "../lib/numberFormat";
 import type { PublicPublisher, PublicSkill } from "../lib/publicUser";
 import { getRuntimeEnv } from "../lib/runtimeEnv";
-import { SkillInstallCard } from "./SkillInstallCard";
 import { type LlmAnalysis, SecurityScanResults } from "./SkillSecurityScanResults";
 import { UserBadge } from "./UserBadge";
 
@@ -274,15 +273,6 @@ export function SkillHeader({
               </div>
             </div>
             <div className="skill-hero-sidebar">
-              {!nixPlugin && !modInfo?.isMalwareBlocked && !modInfo?.isRemoved ? (
-                <a
-                  className="btn btn-primary"
-                  href={`${convexSiteUrl}/api/v1/download?slug=${skill.slug}`}
-                  style={{ width: "100%", justifyContent: "center" }}
-                >
-                  Download zip
-                </a>
-              ) : null}
               <div className="skill-hero-sidebar-meta">
                 <div className="skill-sidebar-item">
                   <span className="skill-sidebar-label">License</span>
@@ -431,7 +421,6 @@ export function SkillHeader({
           </form>
         ) : null}
 
-        <SkillInstallCard clawdis={clawdis} osLabels={osLabels} />
       </div>
     </>
   );

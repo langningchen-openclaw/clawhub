@@ -9,7 +9,8 @@ import type { SkillBySlugResult, SkillPageInitialData } from "../lib/skillPage";
 import { useAuthStatus } from "../lib/useAuthStatus";
 import { ClientOnly } from "./ClientOnly";
 import { SkillCommentsPanel } from "./SkillCommentsPanel";
-import { SkillDetailTabs } from "./SkillDetailTabs";
+import { SkillDetailTabs, type DetailTab } from "./SkillDetailTabs";
+import { SkillMetadataSidebar } from "./SkillMetadataSidebar";
 import {
   buildSkillHref,
   formatConfigSnippet,
@@ -93,7 +94,7 @@ export function SkillDetailPage({
   );
   const [tagName, setTagName] = useState("latest");
   const [tagVersionId, setTagVersionId] = useState<Id<"skillVersions"> | "">("");
-  const [activeTab, setActiveTab] = useState<"files" | "compare" | "versions">("files");
+  const [activeTab, setActiveTab] = useState<DetailTab>("readme");
   const [shouldPrefetchCompare, setShouldPrefetchCompare] = useState(false);
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
@@ -398,68 +399,79 @@ export function SkillDetailPage({
           />
         ) : null}
 
-        {nixSnippet ? (
-          <div className="card">
-            <h2 className="section-title" style={{ fontSize: "1.2rem", margin: 0 }}>
-              Install via Nix
-            </h2>
-            <p className="section-subtitle" style={{ margin: 0 }}>
-              {nixSystems.length ? `Systems: ${nixSystems.join(", ")}` : "nix-clawdbot"}
-            </p>
-            <pre className="hero-install-code" style={{ marginTop: 12 }}>
-              {nixSnippet}
-            </pre>
+        <div className="detail-layout">
+          <div className="detail-main">
+            {nixSnippet ? (
+              <div className="card">
+                <h3 style={{ margin: 0, fontSize: "var(--text-base)", fontWeight: 600 }}>
+                  Install via Nix
+                </h3>
+                <pre className="hero-install-code" style={{ marginTop: 8 }}>
+                  {nixSnippet}
+                </pre>
+              </div>
+            ) : null}
+
+            {configExample ? (
+              <div className="card">
+                <h3 style={{ margin: 0, fontSize: "var(--text-base)", fontWeight: 600 }}>
+                  Config example
+                </h3>
+                <pre className="hero-install-code" style={{ marginTop: 8 }}>
+                  {configExample}
+                </pre>
+              </div>
+            ) : null}
+
+            <SkillDetailTabs
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              onCompareIntent={() => setShouldPrefetchCompare(true)}
+              readmeContent={readmeContent}
+              readmeError={readmeError}
+              latestFiles={latestFiles}
+              latestVersionId={latestVersion?._id ?? null}
+              skill={skill as Doc<"skills">}
+              diffVersions={diffVersions}
+              versions={versions}
+              nixPlugin={Boolean(nixPlugin)}
+              suppressVersionScanResults={suppressVersionScanResults}
+              scanResultsSuppressedMessage={scanResultsSuppressedMessage}
+            />
+
+            <ClientOnly
+              fallback={
+                <div className="card">
+                  <h2 className="section-title" style={{ fontSize: "1.2rem", margin: 0 }}>
+                    Comments
+                  </h2>
+                  <p className="section-subtitle" style={{ marginTop: 12, marginBottom: 0 }}>
+                    Loading comments...
+                  </p>
+                </div>
+              }
+            >
+              <SkillCommentsPanel
+                skillId={skill._id}
+                isAuthenticated={isAuthenticated}
+                me={me ?? null}
+              />
+            </ClientOnly>
           </div>
-        ) : null}
 
-        {configExample ? (
-          <div className="card">
-            <h2 className="section-title" style={{ fontSize: "1.2rem", margin: 0 }}>
-              Config example
-            </h2>
-            <p className="section-subtitle" style={{ margin: 0 }}>
-              Starter config for this plugin bundle.
-            </p>
-            <pre className="hero-install-code" style={{ marginTop: 12 }}>
-              {configExample}
-            </pre>
-          </div>
-        ) : null}
-
-        <SkillDetailTabs
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          onCompareIntent={() => setShouldPrefetchCompare(true)}
-          readmeContent={readmeContent}
-          readmeError={readmeError}
-          latestFiles={latestFiles}
-          latestVersionId={latestVersion?._id ?? null}
-          skill={skill as Doc<"skills">}
-          diffVersions={diffVersions}
-          versions={versions}
-          nixPlugin={Boolean(nixPlugin)}
-          suppressVersionScanResults={suppressVersionScanResults}
-          scanResultsSuppressedMessage={scanResultsSuppressedMessage}
-        />
-
-        <ClientOnly
-          fallback={
-            <div className="card">
-              <h2 className="section-title" style={{ fontSize: "1.2rem", margin: 0 }}>
-                Comments
-              </h2>
-              <p className="section-subtitle" style={{ marginTop: 12, marginBottom: 0 }}>
-                Loading comments…
-              </p>
-            </div>
-          }
-        >
-          <SkillCommentsPanel
-            skillId={skill._id}
-            isAuthenticated={isAuthenticated}
-            me={me ?? null}
+          <SkillMetadataSidebar
+            skill={skill}
+            latestVersion={latestVersion}
+            owner={owner}
+            ownerHandle={ownerHandle}
+            clawdis={clawdis}
+            osLabels={osLabels}
+            tagEntries={tagEntries}
+            isMalwareBlocked={modInfo?.isMalwareBlocked}
+            isRemoved={modInfo?.isRemoved}
+            nixPlugin={nixPlugin}
           />
-        </ClientOnly>
+        </div>
       </div>
 
       <SkillReportDialog

@@ -120,18 +120,55 @@ function Dashboard() {
 
   const skills = mySkills ?? [];
   const packages = myPackages ?? [];
+  const isLoading = mySkills === undefined;
   const ownerHandle =
     selectedPublisher?.publisher.handle ?? me.handle ?? me.name ?? me.displayName ?? me._id;
+
+  // Welcome state for new users with no content
+  if (!isLoading && skills.length === 0 && packages.length === 0) {
+    return (
+      <main className="section">
+        <div className="empty-state">
+          <h1 className="empty-state-title" style={{ fontSize: "1.4rem", fontFamily: "var(--font-display)" }}>
+            Welcome to ClawHub
+          </h1>
+          <p className="empty-state-body">
+            You're signed in as @{ownerHandle}. Get started by publishing your first skill or plugin.
+          </p>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+            <Link to="/publish-skill" search={{ updateSlug: undefined }} className="btn btn-primary">
+              Publish a Skill
+            </Link>
+            <Link
+              to="/skills"
+              search={{
+                q: undefined,
+                sort: undefined,
+                dir: undefined,
+                highlighted: undefined,
+                nonSuspicious: true,
+                view: undefined,
+                focus: undefined,
+              }}
+              className="btn"
+            >
+              Browse Skills
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="section">
       <div className="dashboard-header">
-        <div style={{ display: "grid", gap: "6px" }}>
+        <div>
           <h1 className="section-title" style={{ margin: 0 }}>
             Publisher Dashboard
           </h1>
           <p className="section-subtitle" style={{ margin: 0 }}>
-            Owner-only view for skills and plugins, including security scans and verification.
+            Manage your published skills and plugins.
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>

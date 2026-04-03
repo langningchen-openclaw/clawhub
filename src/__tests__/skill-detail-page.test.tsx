@@ -129,7 +129,7 @@ describe("SkillDetailPage", () => {
     );
 
     expect(screen.queryByText(/Loading skill/i)).toBeNull();
-    expect(await screen.findByRole("heading", { name: "Weather" })).toBeTruthy();
+    expect((await screen.findAllByRole("heading", { name: "Weather" })).length).toBeGreaterThan(0);
     expect(screen.getByText(/Get current weather\./i)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Files" })).toBeTruthy();
   });
@@ -204,7 +204,7 @@ describe("SkillDetailPage", () => {
       />,
     );
 
-    expect(await screen.findByRole("heading", { name: "Weather" })).toBeTruthy();
+    expect((await screen.findAllByRole("heading", { name: "Weather" })).length).toBeGreaterThan(0);
     expect(screen.getByText(/Get current weather\./i)).toBeTruthy();
     expect(getReadmeMock).not.toHaveBeenCalled();
   });
