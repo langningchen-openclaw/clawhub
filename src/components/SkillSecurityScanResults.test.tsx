@@ -3,6 +3,20 @@ import { describe, expect, it } from "vitest";
 import { SecurityScanResults } from "./SkillSecurityScanResults";
 
 describe("SecurityScanResults static guidance", () => {
+  it("renders capability labels separately from scan verdicts", () => {
+    render(
+      <SecurityScanResults
+        capabilityTags={["crypto", "requires-wallet", "can-make-purchases"]}
+        llmAnalysis={{ status: "clean", checkedAt: Date.now() }}
+      />,
+    );
+
+    expect(screen.getByText("Capability signals")).toBeTruthy();
+    expect(screen.getByText("Crypto")).toBeTruthy();
+    expect(screen.getByText("Requires wallet")).toBeTruthy();
+    expect(screen.getByText("Can make purchases")).toBeTruthy();
+  });
+
   it("shows external-clearance guidance only for allowlisted static findings", () => {
     render(
       <SecurityScanResults

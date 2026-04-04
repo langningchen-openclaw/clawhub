@@ -13,6 +13,7 @@ import {
 } from "./lib/skillQuality";
 import { hashSkillFiles } from "./lib/skills";
 import { computeIsSuspicious } from "./lib/skillSafety";
+import { deriveSkillCapabilityTags } from "./lib/skillCapabilityTags";
 import { extractDigestFields } from "./lib/skillSearchDigest";
 import { generateSkillSummary } from "./lib/skillSummary";
 
@@ -316,6 +317,182 @@ export const continueSkillSummaryBackfillJobInternal = internalAction({
     }
 
     return result;
+  },
+});
+
+type CapabilityBackfillStats = {
+  skillsScanned: number;
+  skillsPatched: number;
+  versionsPatched: number;
+  missingVersions: number;
+  missingStorageBlob: number;
+};
+
+type CapabilityBackfillResult = {
+  ok: true;
+  stats: CapabilityBackfillStats;
+  cursor: string | null;
+  isDone: boolean;
+};
+
+export const applySkillCapabilityTagsInternal = internalMutation({
+  args: {
+    skillId: v.id("skills"),
+    versionId: v.id("skillVersions"),
+    capabilityTags: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const version = await ctx.db.get(args.versionId);
+    if (!version) return { ok: false as const, reason: "missing_version" as const };
+    const skill = await ctx.db.get(args.skillId);
+    if (!skill) return { ok: false as const, reason: "missing_skill" as const };
+
+    const normalizedTags = [...new Set(args.capabilityTags)];
+    let versionPatched = false;
+    let skillPatched = false;
+
+    if (JSON.stringify(version.capabilityTags ?? []) !== JSON.stringify(normalizedTags)) {
+      await ctx.db.patch(version._id, {
+        capabilityTags: normalizedTags.length ? normalizedTags : undefined,
+      });
+      versionPatched = true;
+    }
+
+    if (
+      skill.latestVersionId === version._id &&
+      JSON.stringify(skill.capabilityTags ?? []) !== JSON.stringify(normalizedTags)
+    ) {
+      await ctx.db.patch(skill._id, {
+        capabilityTags: normalizedTags.length ? normalizedTags : undefined,
+        updatedAt: Date.now(),
+      });
+      skillPatched = true;
+    }
+
+    return { ok: true as const, versionPatched, skillPatched };
+  },
+});
+
+export async function backfillSkillCapabilityTagsInternalHandler(
+  ctx: ActionCtx,
+  args: {
+    dryRun?: boolean;
+    cursor?: string;
+    batchSize?: number;
+    maxBatches?: number;
+  },
+): Promise<CapabilityBackfillResult> {
+  const dryRun = Boolean(args.dryRun);
+  const batchSize = clampInt(args.batchSize ?? DEFAULT_BATCH_SIZE, 1, MAX_BATCH_SIZE);
+  const maxBatches = clampInt(args.maxBatches ?? DEFAULT_MAX_BATCHES, 1, MAX_MAX_BATCHES);
+
+  const stats: CapabilityBackfillStats = {
+    skillsScanned: 0,
+    skillsPatched: 0,
+    versionsPatched: 0,
+    missingVersions: 0,
+    missingStorageBlob: 0,
+  };
+
+  let cursor = args.cursor ?? null;
+  let isDone = false;
+
+  for (let batchIndex = 0; batchIndex < maxBatches; batchIndex += 1) {
+    const page = await ctx.runQuery(internal.maintenance.getSkillBackfillPageInternal, {
+      cursor: cursor ?? undefined,
+      batchSize,
+    });
+
+    cursor = page.cursor;
+    isDone = page.isDone;
+
+    for (const item of page.items) {
+      if (item.kind !== "ok") {
+        if (item.kind === "missingVersionDoc" || item.kind === "missingLatestVersion") {
+          stats.missingVersions += 1;
+        }
+        continue;
+      }
+
+      stats.skillsScanned += 1;
+
+      const version = (await ctx.runQuery(internal.skills.getVersionByIdInternal, {
+        versionId: item.versionId,
+      })) as Doc<"skillVersions"> | null;
+      if (!version) {
+        stats.missingVersions += 1;
+        continue;
+      }
+
+      const readmeBlob = await ctx.storage.get(item.readmeStorageId);
+      if (!readmeBlob) {
+        stats.missingStorageBlob += 1;
+        continue;
+      }
+
+      const readmeText = await readmeBlob.text();
+      const fileContents: Array<{ path: string; content: string }> = [];
+      for (const file of version.files) {
+        const lower = file.path.toLowerCase();
+        if (lower === "skill.md" || lower === "skills.md") continue;
+        const blob = await ctx.storage.get(file.storageId);
+        if (!blob) {
+          stats.missingStorageBlob += 1;
+          continue;
+        }
+        fileContents.push({ path: file.path, content: await blob.text() });
+      }
+
+      const capabilityTags = deriveSkillCapabilityTags({
+        slug: item.skillSlug,
+        displayName: item.skillDisplayName,
+        summary: item.skillSummary ?? undefined,
+        frontmatter: item.versionParsed.frontmatter,
+        readmeText,
+        fileContents,
+      });
+
+      if (dryRun) continue;
+
+      const result = await ctx.runMutation(internal.maintenance.applySkillCapabilityTagsInternal, {
+        skillId: item.skillId,
+        versionId: item.versionId,
+        capabilityTags,
+      });
+
+      if (result.ok) {
+        if (result.skillPatched) stats.skillsPatched += 1;
+        if (result.versionPatched) stats.versionsPatched += 1;
+      }
+    }
+
+    if (isDone) break;
+  }
+
+  return { ok: true, stats, cursor, isDone };
+}
+
+export const backfillSkillCapabilityTagsInternal = internalAction({
+  args: {
+    dryRun: v.optional(v.boolean()),
+    cursor: v.optional(v.string()),
+    batchSize: v.optional(v.number()),
+    maxBatches: v.optional(v.number()),
+  },
+  handler: backfillSkillCapabilityTagsInternalHandler,
+});
+
+export const backfillSkillCapabilityTags: ReturnType<typeof action> = action({
+  args: {
+    dryRun: v.optional(v.boolean()),
+    cursor: v.optional(v.string()),
+    batchSize: v.optional(v.number()),
+    maxBatches: v.optional(v.number()),
+  },
+  handler: async (ctx, args): Promise<CapabilityBackfillResult> => {
+    const { user } = await requireUserFromAction(ctx);
+    assertRole(user, ["admin"]);
+    return ctx.runAction(internal.maintenance.backfillSkillCapabilityTagsInternal, args);
   },
 });
 
