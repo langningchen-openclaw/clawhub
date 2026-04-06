@@ -12,4 +12,8 @@ export const SKILL_CATEGORIES: SkillCategory[] = [
   { slug: "data", label: "Data & APIs", keywords: ["api", "data", "fetch", "http", "rest", "graphql"] },
   { slug: "security", label: "Security", keywords: ["security", "scan", "auth", "encrypt"] },
   { slug: "automation", label: "Automation", keywords: ["auto", "cron", "schedule", "bot"] },
+  { slug: "other", label: "Other", keywords: [] },
 ];
+
+export const ALL_CATEGORY_KEYWORDS = SKILL_CATEGORIES.flatMap((c) => c.keywords);
+

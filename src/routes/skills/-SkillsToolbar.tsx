@@ -37,12 +37,23 @@ type SkillsToolbarProps = {
   view: "cards" | "list";
   highlightedOnly: boolean;
   nonSuspiciousOnly: boolean;
+  capabilityTag?: string;
   onQueryChange: (next: string) => void;
   onToggleHighlighted: () => void;
   onToggleNonSuspicious: () => void;
+  onCapabilityTagChange: (value: string) => void;
   onSortChange: (value: string) => void;
   onToggleDir: () => void;
   onToggleView: () => void;
+};
+
+const SKILL_CAPABILITY_LABELS: Record<string, string> = {
+  crypto: "Crypto",
+  "requires-wallet": "Requires wallet",
+  "can-make-purchases": "Payments",
+  "can-sign-transactions": "Signs transactions",
+  "requires-oauth-token": "OAuth",
+  "posts-externally": "External posting",
 };
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
@@ -65,14 +76,17 @@ export function SkillsToolbar({
   view,
   highlightedOnly,
   nonSuspiciousOnly,
+  capabilityTag,
   onQueryChange,
   onToggleHighlighted,
   onToggleNonSuspicious,
+  onCapabilityTagChange,
   onSortChange,
   onToggleDir,
   onToggleView,
 }: SkillsToolbarProps) {
   const activeCategory = useMemo(() => {
+    if (query === "__other__") return "other";
     if (!query) return undefined;
     return SKILL_CATEGORIES.find((c) =>
       c.keywords.some((k) => k === query.trim().toLowerCase()),
@@ -80,7 +94,11 @@ export function SkillsToolbar({
   }, [query]);
 
   const handleCategoryChange = (cat: SkillCategory | undefined) => {
-    if (cat?.keywords[0]) {
+    if (!cat) {
+      onQueryChange("");
+    } else if (cat.slug === "other") {
+      onQueryChange("__other__");
+    } else if (cat.keywords[0]) {
       onQueryChange(cat.keywords[0]);
     } else {
       onQueryChange("");
@@ -120,6 +138,15 @@ export function SkillsToolbar({
         <FilterChip active={nonSuspiciousOnly} onClick={onToggleNonSuspicious}>
           Clean only
         </FilterChip>
+        {capabilityTag ? (
+          <FilterChip
+            active
+            onClick={() => onCapabilityTagChange("__all__")}
+            icon={<X className="h-3 w-3" />}
+          >
+            {SKILL_CAPABILITY_LABELS[capabilityTag] ?? capabilityTag}
+          </FilterChip>
+        ) : null}
         <Select value={activeCategory ?? "__all__"} onValueChange={(v) => handleCategoryChange(v === "__all__" ? undefined : SKILL_CATEGORIES.find((c) => c.slug === v))}>
           <SelectTrigger
             className="w-auto min-w-[156px] min-h-[36px] py-1.5 text-xs font-semibold"
