@@ -101,11 +101,9 @@ export function SkillsIndex() {
             view={model.view}
             highlightedOnly={model.highlightedOnly}
             nonSuspiciousOnly={model.nonSuspiciousOnly}
-            capabilityTag={model.capabilityTag}
             onQueryChange={model.onQueryChange}
             onToggleHighlighted={model.onToggleHighlighted}
             onToggleNonSuspicious={model.onToggleNonSuspicious}
-            onCapabilityTagChange={model.onCapabilityTagChange}
             onSortChange={model.onSortChange}
             onToggleDir={model.onToggleDir}
             onToggleView={model.onToggleView}
