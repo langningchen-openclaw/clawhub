@@ -9,7 +9,7 @@ type PluginListItemProps = {
 
 export function PluginListItem({ item }: PluginListItemProps) {
   return (
-    <Link to="/plugins/$name" params={{ name: item.name }} className="skill-list-item">
+    <Link to="/plugins/$name" params={{ name: item.name }} className="skill-list-item" aria-label={`Plugin: ${item.displayName}`}>
       <MarketplaceIcon kind="plugin" label={item.displayName} />
       <div className="skill-list-item-body">
         <div className="skill-list-item-main">

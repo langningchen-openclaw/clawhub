@@ -10,7 +10,7 @@ function parseSort(value: unknown): SortKey {
   return "newest";
 }
 
-function parseDir(value: unknown, sort: SortKey): SortDir {
+function _parseDir(value: unknown, sort: SortKey): SortDir {
   if (value === "asc" || value === "desc") return value;
   return sort === "name" ? "asc" : "desc";
 }

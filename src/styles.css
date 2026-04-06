@@ -791,7 +791,7 @@ code {
   border-radius: 16px;
   display: grid;
   place-items: center;
-  color: #a34129;
+  color: #999999;
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(255, 231, 220, 0.88));
   border: 1px solid rgba(255, 118, 84, 0.22);
   margin-bottom: 12px;
@@ -826,7 +826,7 @@ code {
   border-radius: var(--r-sm);
   border: 1px solid rgba(255, 118, 84, 0.4);
   background: linear-gradient(140deg, rgba(255, 255, 255, 0.92), rgba(255, 245, 238, 0.88));
-  color: #9d3f26;
+  color: #999999;
   font-weight: 700;
   width: fit-content;
   padding-inline: 14px;
@@ -1027,7 +1027,7 @@ code {
 }
 
 .error {
-  color: #ab3a27;
+  color: #999999;
   font-weight: 600;
 }
 
@@ -1065,8 +1065,8 @@ code {
 }
 
 .upload-badge {
-  background: linear-gradient(140deg, #ffddc9, #ffe9df);
-  color: #9a3a24;
+  background: var(--surface-muted);
+  color: #999999;
   border-radius: var(--r-pill);
   padding: 12px 18px;
   font-weight: 700;
@@ -1133,7 +1133,7 @@ code {
   border: 1px solid rgba(30, 57, 74, 0.2);
   border-radius: var(--r-md);
   padding: 12px 14px;
-  background: #fbfeff;
+  background: #141414;
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.85),
     inset 0 1px 6px rgba(255, 255, 255, 0.08);
@@ -1162,7 +1162,7 @@ code {
   border: 2px dashed rgba(255, 255, 255, 0.5);
   border-radius: 16px;
   padding: 20px;
-  background: radial-gradient(circle at top, #fff3ec 0%, #ffffff 65%);
+  background: var(--surface);
   display: grid;
   gap: 12px;
   text-align: center;
@@ -1181,7 +1181,7 @@ code {
 .dropzone.is-dragging {
   border-color: var(--accent);
   box-shadow: 0 20px 40px rgba(255, 255, 255, 0.25);
-  background: radial-gradient(circle at top, #ffe1d3 0%, #fff6f1 70%);
+  background: var(--surface-muted);
 }
 
 .dropzone-icon {
@@ -1192,7 +1192,7 @@ code {
   display: grid;
   place-items: center;
   font-size: 1.4rem;
-  background: linear-gradient(160deg, #aaaaaa, #999999);
+  background: var(--ink-soft);
   color: white;
   box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.4);
 }
@@ -1231,7 +1231,7 @@ code {
   padding: 6px 12px;
   border-radius: var(--r-pill);
   background: rgba(255, 255, 255, 0.12);
-  color: #9a3a24;
+  color: #999999;
   font-weight: 600;
   width: fit-content;
 }
@@ -1286,7 +1286,7 @@ code {
 }
 
 .upload-notes {
-  background: #f6fcff;
+  background: #141414;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--r-md);
   padding: 18px;
@@ -1312,7 +1312,7 @@ code {
   display: grid;
   gap: 6px;
   font-size: 0.85rem;
-  color: #9a3a24;
+  color: #999999;
 }
 
 .upload-validation-item {
@@ -1332,7 +1332,7 @@ code {
 }
 
 .upload-error {
-  color: #b84a3a;
+  color: #aaaaaa;
 }
 
 .section-title {
@@ -2909,7 +2909,7 @@ code {
 
 .diff-pill-added {
   background: rgba(43, 198, 164, 0.18);
-  color: #0b6b58;
+  color: #808080;
 }
 
 .diff-pill-removed {

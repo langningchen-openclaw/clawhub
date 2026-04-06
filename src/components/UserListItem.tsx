@@ -13,7 +13,7 @@ export function UserListItem({ user }: UserListItemProps) {
   const displayName = user.displayName ?? user.name ?? handle;
 
   return (
-    <Link to="/u/$handle" params={{ handle }} className="skill-list-item user-list-item">
+    <Link to="/u/$handle" params={{ handle }} className="skill-list-item user-list-item" aria-label={`User: ${displayName}`}>
       <MarketplaceIcon kind="user" label={displayName} imageUrl={user.image} />
       <div className="skill-list-item-body">
         <div className="skill-list-item-main">
