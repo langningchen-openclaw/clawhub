@@ -193,13 +193,15 @@ export function SkillDetailPage({
       : isHidden
         ? "Hidden"
         : null;
-  const staffModerationNote = staffVisibilityTag
-    ? isAutoHidden
-      ? "Auto-hidden after 4+ unique reports."
-      : isRemoved
-        ? "Removed from public view."
-        : "Hidden from public view."
-    : null;
+  const staffModerationNote =
+    staffSkill?.moderationNotes?.trim() ||
+    (staffVisibilityTag
+      ? isAutoHidden
+        ? "Auto-hidden after 4+ unique reports."
+        : isRemoved
+          ? "Removed from public view."
+          : "Hidden from public view."
+      : null);
 
   const versionById = new Map<Id<"skillVersions">, Doc<"skillVersions">>(
     (diffVersions ?? versions ?? []).map((version) => [version._id, version]),
@@ -209,7 +211,6 @@ export function SkillDetailPage({
     ?.clawdis;
   const osLabels = useMemo(() => formatOsList(clawdis?.os), [clawdis?.os]);
   const nixPlugin = clawdis?.nix?.plugin;
-  const _nixSystems = clawdis?.nix?.systems ?? [];
   const nixSnippet = nixPlugin ? formatNixInstallSnippet(nixPlugin) : null;
   const configRequirements = clawdis?.config;
   const configExample = configRequirements?.example

@@ -15,3 +15,5 @@ export const SKILL_CATEGORIES: SkillCategory[] = [
   { slug: "automation", label: "Automation", icon: "zap", keywords: ["auto", "cron", "schedule", "bot"] },
   { slug: "other", label: "Other", icon: "package", keywords: [] },
 ];
+
+export const ALL_CATEGORY_KEYWORDS = SKILL_CATEGORIES.flatMap((c) => c.keywords);

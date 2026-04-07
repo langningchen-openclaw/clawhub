@@ -2,17 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 
 const sortKeys = ["newest", "downloads", "stars", "name", "updated"] as const;
 type SortKey = (typeof sortKeys)[number];
-type SortDir = "asc" | "desc";
-
 function parseSort(value: unknown): SortKey {
   if (typeof value !== "string") return "newest";
   if ((sortKeys as readonly string[]).includes(value)) return value as SortKey;
   return "newest";
-}
-
-function _parseDir(value: unknown, sort: SortKey): SortDir {
-  if (value === "asc" || value === "desc") return value;
-  return sort === "name" ? "asc" : "desc";
 }
 
 export const Route = createFileRoute("/souls/")({

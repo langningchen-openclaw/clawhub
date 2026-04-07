@@ -297,13 +297,15 @@ export function SkillHeader({
             <div className="skill-hero-note">{overrideScanMessage}</div>
           ) : latestVersion?.sha256hash ||
             latestVersion?.llmAnalysis ||
-            (latestVersion?.staticScan?.findings?.length ?? 0) > 0 ? (
+            (latestVersion?.staticScan?.findings?.length ?? 0) > 0 ||
+            (latestVersion?.capabilityTags?.length ?? 0) > 0 ? (
             <div className="skill-hero-scan-row">
               <SecurityScanResults
                 sha256hash={latestVersion?.sha256hash}
                 vtAnalysis={latestVersion?.vtAnalysis}
                 llmAnalysis={latestVersion?.llmAnalysis as LlmAnalysis | undefined}
                 staticFindings={latestVersion?.staticScan?.findings}
+                capabilityTags={latestVersion?.capabilityTags}
               />
               <p className="scan-disclaimer">
                 Like a lobster shell, security has layers — review code before you run it.

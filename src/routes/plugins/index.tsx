@@ -1,9 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Search } from "lucide-react";
+import { AlertTriangle, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BrowseSidebar } from "../../components/BrowseSidebar";
 import { PluginListItem } from "../../components/PluginListItem";
-import { fetchPluginCatalog, type PackageListItem } from "../../lib/packageApi";
+import {
+  fetchPluginCatalog,
+  isRateLimitedPackageApiError,
+  type PackageListItem,
+} from "../../lib/packageApi";
 
 type PluginSearchState = {
   q?: string;
@@ -16,7 +20,18 @@ type PluginSearchState = {
 type PluginsLoaderData = {
   items: PackageListItem[];
   nextCursor: string | null;
+  rateLimited: boolean;
+  retryAfterSeconds: number | null;
 };
+
+function formatRetryDelay(retryAfterSeconds: number | null) {
+  if (!retryAfterSeconds || retryAfterSeconds <= 0) return "in a moment";
+  if (retryAfterSeconds < 60) {
+    return `in about ${retryAfterSeconds} second${retryAfterSeconds === 1 ? "" : "s"}`;
+  }
+  const minutes = Math.ceil(retryAfterSeconds / 60);
+  return `in about ${minutes} minute${minutes === 1 ? "" : "s"}`;
+}
 
 export const Route = createFileRoute("/plugins/")({
   validateSearch: (search): PluginSearchState => ({
@@ -51,9 +66,19 @@ export const Route = createFileRoute("/plugins/")({
       return {
         items: data.items ?? [],
         nextCursor: data.nextCursor ?? null,
+        rateLimited: false,
+        retryAfterSeconds: null,
       } satisfies PluginsLoaderData;
-    } catch {
-      return { items: [], nextCursor: null } satisfies PluginsLoaderData;
+    } catch (error) {
+      if (isRateLimitedPackageApiError(error)) {
+        return {
+          items: [],
+          nextCursor: null,
+          rateLimited: true,
+          retryAfterSeconds: (error as { retryAfterSeconds?: number }).retryAfterSeconds ?? null,
+        } satisfies PluginsLoaderData;
+      }
+      return { items: [], nextCursor: null, rateLimited: false, retryAfterSeconds: null } satisfies PluginsLoaderData;
     }
   },
   component: PluginsIndex,
@@ -62,7 +87,8 @@ export const Route = createFileRoute("/plugins/")({
 export function PluginsIndex() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
-  const { items, nextCursor } = Route.useLoaderData() as PluginsLoaderData;
+  const { items, nextCursor, rateLimited, retryAfterSeconds } =
+    Route.useLoaderData() as PluginsLoaderData;
   const [query, setQuery] = useState(search.q ?? "");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -173,7 +199,15 @@ export function PluginsIndex() {
             </span>
           </div>
 
-          {items.length === 0 ? (
+          {rateLimited ? (
+            <div className="empty-state">
+              <AlertTriangle size={20} aria-hidden="true" />
+              <p className="empty-state-title">Plugin catalog is temporarily unavailable</p>
+              <p className="empty-state-body">
+                Try again {formatRetryDelay(retryAfterSeconds)}.
+              </p>
+            </div>
+          ) : items.length === 0 ? (
             <div className="empty-state">
               <p className="empty-state-title">No plugins found</p>
               <p className="empty-state-body">Try a different search term or remove filters.</p>

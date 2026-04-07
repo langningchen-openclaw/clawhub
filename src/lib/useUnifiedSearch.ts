@@ -68,7 +68,7 @@ export function useUnifiedSearch(
             Promise<unknown> | null,
             Promise<{ items: PackageListItem[] }> | null,
             Promise<{ items: PublicUser[] }> | null,
-          ] = [null, null];
+          ] = [null, null, null];
 
           if (activeType === "all" || activeType === "skills") {
             promises[0] = searchSkills({

@@ -25,7 +25,12 @@ export function Footer() {
               Skills
             </Link>
             <Link to="/plugins">Plugins</Link>
-            <Link to="/souls">Souls</Link>
+            <Link
+              to="/souls"
+              search={{ q: undefined, sort: undefined, dir: undefined, view: undefined, focus: undefined }}
+            >
+              Souls
+            </Link>
             <Link to="/users">Users</Link>
             <Link
               to="/skills"

@@ -3,6 +3,34 @@
 @import "@fontsource/manrope/latin.css";
 @import "@fontsource/ibm-plex-mono/latin.css";
 
+@theme {
+  --color-bg: var(--bg);
+  --color-bg-soft: var(--bg-soft);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-nav-bg: var(--nav-bg);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-accent: var(--accent);
+  --color-accent-deep: var(--accent-deep);
+  --color-seafoam: var(--seafoam);
+  --color-gold: var(--gold);
+  --color-line: var(--line);
+  --color-border-ui: var(--border-ui);
+  --color-border-ui-hover: var(--border-ui-hover);
+  --color-border-ui-active: var(--border-ui-active);
+  --radius-lg: var(--radius-lg);
+  --radius-md: var(--radius-md);
+  --radius-sm: var(--radius-sm);
+  --radius-pill: var(--radius-pill);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+  --shadow-default: var(--shadow);
+}
+
+@variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
   color-scheme: dark;
 
@@ -4649,6 +4677,32 @@ html.theme-transition::view-transition-new(theme) {
 .scan-results-list {
   display: grid;
   gap: 0;
+}
+
+.scan-capabilities-section {
+  display: grid;
+  gap: 10px;
+  padding: 0 0 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 50%, transparent);
+  margin-bottom: 4px;
+}
+
+.scan-capability-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.scan-capability-tag {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 24%, var(--line));
+  color: var(--ink);
+}
+
+.scan-capability-note {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
 }
 
 .scan-result-row {

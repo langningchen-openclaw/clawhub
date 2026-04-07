@@ -24,12 +24,10 @@ vi.mock("./skills", () => ({
 }));
 
 const { getAuthUserId } = await import("@convex-dev/auth/server");
-const { getOptionalApiTokenUserId, requireApiTokenUser, requirePackagePublishAuth } = await import(
-  "./lib/apiTokenAuth"
-);
-const { fetchGitHubRepositoryIdentity, verifyGitHubActionsTrustedPublishJwt } = await import(
-  "./lib/githubActionsOidc"
-);
+const { getOptionalApiTokenUserId, requireApiTokenUser, requirePackagePublishAuth } =
+  await import("./lib/apiTokenAuth");
+const { fetchGitHubRepositoryIdentity, verifyGitHubActionsTrustedPublishJwt } =
+  await import("./lib/githubActionsOidc");
 const { publishVersionForUser } = await import("./skills");
 const { __handlers } = await import("./httpApiV1");
 
@@ -1264,6 +1262,7 @@ describe("httpApiV1 handlers", () => {
             changelog: "c",
             changelogSource: "auto",
             sha256hash: "b".repeat(64),
+            capabilityTags: ["crypto", "requires-wallet", "can-make-purchases"],
             vtAnalysis: {
               status: "clean",
               checkedAt: 111,
@@ -1298,6 +1297,11 @@ describe("httpApiV1 handlers", () => {
     const json = await response.json();
     expect(json.security.status).toBe("suspicious");
     expect(json.security.hasScanResult).toBe(true);
+    expect(json.security.capabilityTags).toEqual([
+      "crypto",
+      "requires-wallet",
+      "can-make-purchases",
+    ]);
     expect(json.security.scanners.llm.verdict).toBe("suspicious");
     expect(json.moderation.scope).toBe("skill");
     expect(json.moderation.sourceVersion).toEqual({
@@ -1357,6 +1361,51 @@ describe("httpApiV1 handlers", () => {
     expect(json.security.status).toBe("error");
     expect(json.security.hasScanResult).toBe(false);
     expect(json.security.scanners.llm.normalizedStatus).toBe("error");
+  });
+
+  it("returns capability tags even when no scanner result exists yet", async () => {
+    const runQuery = vi.fn(async (_query: unknown, args: Record<string, unknown>) => {
+      if ("slug" in args) {
+        return {
+          skill: {
+            _id: "skills:1",
+            slug: "demo",
+            displayName: "Demo",
+            summary: "s",
+            tags: { latest: "versions:1" },
+            stats: {},
+            createdAt: 1,
+            updatedAt: 2,
+          },
+          latestVersion: {
+            version: "1.0.0",
+            createdAt: 1,
+            changelog: "c",
+            changelogSource: "auto",
+            capabilityTags: ["posts-externally", "requires-oauth-token"],
+            files: [],
+          },
+          owner: { _id: "users:1", handle: "owner", displayName: "Owner" },
+          moderationInfo: {
+            isPendingScan: true,
+            isMalwareBlocked: false,
+            isSuspicious: false,
+            isHiddenByMod: false,
+            isRemoved: false,
+          },
+        };
+      }
+      return null;
+    });
+    const runMutation = vi.fn().mockResolvedValue(okRate());
+    const response = await __handlers.skillsGetRouterV1Handler(
+      makeCtx({ runQuery, runMutation }),
+      new Request("https://example.com/api/v1/skills/demo/scan"),
+    );
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json.security.capabilityTags).toEqual(["posts-externally", "requires-oauth-token"]);
+    expect(json.security.hasScanResult).toBe(false);
   });
 
   it("keeps hasScanResult true when one scanner returns a definitive verdict", async () => {
@@ -3039,7 +3088,10 @@ describe("httpApiV1 handlers", () => {
     );
 
     const zipEntries = unzipSync(new Uint8Array(await response.arrayBuffer()));
-    expect(Object.keys(zipEntries).sort()).toEqual(["package/dist/index.js", "package/package.json"]);
+    expect(Object.keys(zipEntries).sort()).toEqual([
+      "package/dist/index.js",
+      "package/package.json",
+    ]);
     expect(zipEntries["_meta.json"]).toBeUndefined();
   });
 
@@ -3314,7 +3366,9 @@ describe("httpApiV1 handlers", () => {
 
     const fileResponse = await __handlers.packagesGetRouterV1Handler(
       makeCtx({ runQuery, runMutation, storage: { get: vi.fn() } }),
-      new Request("https://example.com/api/v1/packages/demo-plugin/file?version=1.0.0&path=README.md"),
+      new Request(
+        "https://example.com/api/v1/packages/demo-plugin/file?version=1.0.0&path=README.md",
+      ),
     );
     const downloadResponse = await __handlers.packagesGetRouterV1Handler(
       makeCtx({ runQuery, runMutation, storage: { get: vi.fn() } }),
@@ -3335,7 +3389,9 @@ describe("httpApiV1 handlers", () => {
       user: { _id: "users:1", handle: "p" },
     } as never);
     const runMutation = vi.fn().mockResolvedValue(okRate());
-    const runAction = vi.fn().mockResolvedValue({ ok: true, packageId: "pkg:1", releaseId: "rel:1" });
+    const runAction = vi
+      .fn()
+      .mockResolvedValue({ ok: true, packageId: "pkg:1", releaseId: "rel:1" });
 
     const response = await __handlers.publishPackageV1Handler(
       makeCtx({ runAction, runMutation }),
@@ -3387,7 +3443,9 @@ describe("httpApiV1 handlers", () => {
       user: { _id: "users:1", handle: "p" },
     } as never);
     const runMutation = vi.fn().mockResolvedValue(okRate());
-    const runAction = vi.fn().mockResolvedValue({ ok: true, packageId: "pkg:1", releaseId: "rel:1" });
+    const runAction = vi
+      .fn()
+      .mockResolvedValue({ ok: true, packageId: "pkg:1", releaseId: "rel:1" });
     const form = new FormData();
     form.set(
       "payload",
@@ -3400,10 +3458,7 @@ describe("httpApiV1 handlers", () => {
       }),
     );
     form.append("files", new File(["{}"], ".DS_Store", { type: "application/octet-stream" }));
-    form.append(
-      "files",
-      new File(["{}"], "openclaw.bundle.json", { type: "application/json" }),
-    );
+    form.append("files", new File(["{}"], "openclaw.bundle.json", { type: "application/json" }));
 
     const response = await __handlers.publishPackageV1Handler(
       makeCtx({
@@ -3442,7 +3497,9 @@ describe("httpApiV1 handlers", () => {
       publishToken: { _id: "packagePublishTokens:1" },
     } as never);
     const runMutation = vi.fn().mockResolvedValue(okRate());
-    const runAction = vi.fn().mockResolvedValue({ ok: true, packageId: "pkg:1", releaseId: "rel:1" });
+    const runAction = vi
+      .fn()
+      .mockResolvedValue({ ok: true, packageId: "pkg:1", releaseId: "rel:1" });
 
     const response = await __handlers.publishPackageV1Handler(
       makeCtx({ runAction, runMutation }),
@@ -3674,7 +3731,8 @@ describe("httpApiV1 handlers", () => {
     expect(body.token).toEqual(expect.any(String));
     expect(body.expiresAt).toEqual(expect.any(Number));
     const createCall = runMutation.mock.calls.find(
-      ([, args]) => typeof args === "object" && args !== null && "packageId" in args && "tokenHash" in args,
+      ([, args]) =>
+        typeof args === "object" && args !== null && "packageId" in args && "tokenHash" in args,
     );
     expect(createCall?.[1]).toEqual(
       expect.objectContaining({
@@ -3735,7 +3793,9 @@ describe("httpApiV1 handlers", () => {
     );
 
     if (response.status !== 200) throw new Error(await response.text());
-    expect(fetchGitHubRepositoryIdentity).toHaveBeenCalledWith("https://github.com/openclaw/openclaw");
+    expect(fetchGitHubRepositoryIdentity).toHaveBeenCalledWith(
+      "https://github.com/openclaw/openclaw",
+    );
     expect(runMutation).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
@@ -3792,7 +3852,9 @@ describe("httpApiV1 handlers", () => {
     );
 
     if (response.status !== 200) throw new Error(await response.text());
-    expect(fetchGitHubRepositoryIdentity).toHaveBeenCalledWith("https://github.com/openclaw/openclaw");
+    expect(fetchGitHubRepositoryIdentity).toHaveBeenCalledWith(
+      "https://github.com/openclaw/openclaw",
+    );
     expect(await response.json()).toEqual({
       trustedPublisher: {
         provider: "github-actions",
@@ -3804,7 +3866,8 @@ describe("httpApiV1 handlers", () => {
       },
     });
     const setCall = runMutation.mock.calls.find(
-      ([, args]) => typeof args === "object" && args !== null && "packageName" in args && "actorUserId" in args,
+      ([, args]) =>
+        typeof args === "object" && args !== null && "packageName" in args && "actorUserId" in args,
     );
     expect(setCall?.[1]).toEqual(
       expect.objectContaining({

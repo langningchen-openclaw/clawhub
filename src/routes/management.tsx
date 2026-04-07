@@ -327,12 +327,17 @@ function Management() {
                     <button
                       className="btn"
                       type="button"
-                      onClick={() =>
+                      onClick={() => {
+                        const reason = window.prompt(
+                          skill.softDeletedAt ? "Restore reason:" : "Hide reason:",
+                        );
+                        if (reason === null) return;
                         void setSoftDeleted({
                           skillId: skill._id,
                           deleted: !skill.softDeletedAt,
-                        })
-                      }
+                          reason,
+                        });
+                      }}
                     >
                       {skill.softDeletedAt ? "Restore" : "Hide"}
                     </button>
@@ -591,12 +596,17 @@ function Management() {
                     <button
                       className="btn management-action-btn"
                       type="button"
-                      onClick={() =>
+                      onClick={() => {
+                        const reason = window.prompt(
+                          skill.softDeletedAt ? "Restore reason:" : "Hide reason:",
+                        );
+                        if (reason === null) return;
                         void setSoftDeleted({
                           skillId: skill._id,
                           deleted: !skill.softDeletedAt,
-                        })
-                      }
+                          reason,
+                        });
+                      }}
                     >
                       {skill.softDeletedAt ? "Restore" : "Hide"}
                     </button>
