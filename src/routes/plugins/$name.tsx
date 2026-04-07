@@ -296,8 +296,7 @@ function PluginDetailRoute() {
     : [];
 
   return (
-    <main className="py-10">
-      <Container>
+    <main className="section">
         <div className="flex flex-col gap-5">
           {/* Header card */}
           <Card>
@@ -578,7 +577,6 @@ function PluginDetailRoute() {
             </Card>
           ) : null}
         </div>
-      </Container>
     </main>
   );
 }
