@@ -26,6 +26,7 @@ const useAuthStatusMock = vi.fn();
 const originalFetch = globalThis.fetch;
 
 vi.mock("convex/react", () => ({
+  ConvexReactClient: class { constructor(_url: string) {} },
   useMutation: () => generateUploadUrl,
   useAction: () => publishRelease,
   useQuery: () => undefined,
