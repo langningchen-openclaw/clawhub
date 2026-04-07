@@ -1,7 +1,8 @@
-import { useQuery } from "convex/react";
 import { Package, Star, Download } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
+import { convexHttp } from "../convex/client";
 import { hasOwnProperty } from "../lib/hasOwnProperty";
 import { formatCompactStat } from "../lib/numberFormat";
 import type { PublicPublisher, PublicUser } from "../lib/publicUser";
@@ -91,6 +92,8 @@ export function UserBadge({
   );
 }
 
+type HoverStats = { publishedSkills: number; totalStars: number; totalDownloads: number };
+
 function UserStatsTooltipContent({
   userId,
   displayName,
@@ -100,19 +103,24 @@ function UserStatsTooltipContent({
   displayName: string | null;
   handle: string | null;
 }) {
-  const [shouldFetch, setShouldFetch] = useState(false);
-  const stats = useQuery(
-    api.users.getHoverStats,
-    shouldFetch ? { userId: userId as any } : "skip",
-  );
+  const [stats, setStats] = useState<HoverStats | null>(null);
+  const [fetched, setFetched] = useState(false);
+
+  // One-shot fetch on mount (tooltip content only mounts when open)
+  useEffect(() => {
+    if (fetched) return;
+    setFetched(true);
+    void convexHttp
+      .query(api.users.getHoverStats, { userId: userId as Id<"users"> })
+      .then(setStats)
+      .catch(() => {});
+  }, [userId, fetched]);
 
   return (
     <TooltipContent
       side="top"
       className="min-w-[140px] p-0"
       onPointerDownOutside={(e) => e.preventDefault()}
-      // Start fetching when tooltip opens (content mounts)
-      ref={() => setShouldFetch(true)}
     >
       <div className="flex flex-col gap-space-1 px-3 py-2">
         {displayName && (
@@ -125,7 +133,7 @@ function UserStatsTooltipContent({
         )}
       </div>
       <div className="border-t border-line flex items-center gap-space-3 px-3 py-2">
-        {stats === undefined ? (
+        {stats === null ? (
           <span className="text-fs-xs text-ink-soft">Loading...</span>
         ) : (
           <>

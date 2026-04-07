@@ -222,6 +222,7 @@ export default function Header() {
                 ) : null}
                 <Button
                   variant="primary"
+                  size="sm"
                   type="button"
                   disabled={isLoading}
                   onClick={() => {

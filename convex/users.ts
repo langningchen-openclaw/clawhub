@@ -474,7 +474,7 @@ export const getHoverStats = query({
     const skills = await ctx.db
       .query("skills")
       .withIndex("by_owner", (q) => q.eq("ownerUserId", args.userId))
-      .collect();
+      .take(500);
 
     const active = skills.filter((s) => !s.softDeletedAt);
     let totalStars = 0;
