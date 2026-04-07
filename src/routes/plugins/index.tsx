@@ -78,7 +78,7 @@ export const Route = createFileRoute("/plugins/")({
           retryAfterSeconds: (error as { retryAfterSeconds?: number }).retryAfterSeconds ?? null,
         } satisfies PluginsLoaderData;
       }
-      return { items: [], nextCursor: null, rateLimited: false, retryAfterSeconds: null } satisfies PluginsLoaderData;
+      throw error;
     }
   },
   component: PluginsIndex,

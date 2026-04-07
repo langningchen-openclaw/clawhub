@@ -49,6 +49,7 @@ export function useUnifiedSearch(
   useEffect(() => {
     const trimmed = query.trim();
     if (!trimmed) {
+      requestRef.current += 1;
       setResults([]);
       setSkillCount(0);
       setPluginCount(0);
@@ -86,9 +87,15 @@ export function useUnifiedSearch(
             promises[2] = convexHttp.query(api.users.listPublic, { search: trimmed, limit: 25 });
           }
 
-          const [skillsRaw, pluginsRaw, usersRaw] = await Promise.all(promises);
+          const settled = await Promise.allSettled(
+            promises.map((p) => p ?? Promise.resolve(null)),
+          );
 
           if (requestId !== requestRef.current) return;
+
+          const skillsRaw = settled[0].status === "fulfilled" ? settled[0].value : null;
+          const pluginsRaw = settled[1].status === "fulfilled" ? settled[1].value : null;
+          const usersRaw = settled[2].status === "fulfilled" ? settled[2].value : null;
 
           const skillResults: UnifiedSkillResult[] = (
             (skillsRaw as Array<{ skill: UnifiedSkillResult["skill"]; ownerHandle: string | null; score: number }>) ?? []
@@ -128,7 +135,8 @@ export function useUnifiedSearch(
           }
 
           setResults(merged);
-        } catch {
+        } catch (error) {
+          console.error("Unified search failed:", error);
           if (requestId === requestRef.current) {
             setResults([]);
             setSkillCount(0);
