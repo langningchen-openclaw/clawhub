@@ -471,33 +471,12 @@ export const getByHandle = query({
 export const getHoverStats = query({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {
-    const skills = [];
-    let cursor: string | null = null;
-
-    for (;;) {
-      const page = await ctx.db
-        .query("skills")
-        .withIndex("by_owner", (q) => q.eq("ownerUserId", args.userId))
-        .paginate({ cursor, numItems: 100 });
-      skills.push(...page.page);
-      if (page.isDone) {
-        break;
-      }
-      cursor = page.continueCursor;
-    }
-
-    const active = skills.filter((s) => !s.softDeletedAt);
-    let totalStars = 0;
-    let totalDownloads = 0;
-    for (const s of active) {
-      totalStars += s.stats?.stars ?? 0;
-      totalDownloads += s.stats?.downloads ?? 0;
-    }
+    const user = await ctx.db.get(args.userId);
 
     return {
-      publishedSkills: active.length,
-      totalStars,
-      totalDownloads,
+      publishedSkills: user?.publishedSkills ?? 0,
+      totalStars: user?.totalStars ?? 0,
+      totalDownloads: user?.totalDownloads ?? 0,
     };
   },
 });

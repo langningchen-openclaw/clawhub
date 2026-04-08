@@ -218,6 +218,9 @@ export const seedDemoSkills = internalMutation({
 
     const now = Date.now();
     const DAY = 86400000;
+    let totalPublishedSkills = 0;
+    let totalStars = 0;
+    let totalDownloads = 0;
 
     for (let i = 0; i < DEMO_SKILLS.length; i++) {
       const s = DEMO_SKILLS[i];
@@ -295,6 +298,10 @@ export const seedDemoSkills = internalMutation({
         tags: { latest: versionId },
       });
 
+      totalPublishedSkills += 1;
+      totalStars += s.stars;
+      totalDownloads += s.downloads;
+
       // Create digest for search
       await ctx.db.insert("skillSearchDigest", {
         skillId,
@@ -320,8 +327,8 @@ export const seedDemoSkills = internalMutation({
           installsCurrent: Math.floor(s.installs * 0.3),
           installsAllTime: s.installs,
           stars: s.stars,
-          versions: Math.floor(Math.random() * 8) + 1,
-          comments: Math.floor(Math.random() * 15),
+          versions: numVersions,
+          comments: numComments,
         },
         statsDownloads: s.downloads,
         statsStars: s.stars,
@@ -336,6 +343,12 @@ export const seedDemoSkills = internalMutation({
         updatedAt,
       });
     }
+
+    await ctx.db.patch(seedUserId, {
+      publishedSkills: totalPublishedSkills,
+      totalStars,
+      totalDownloads,
+    });
 
     return { seeded: true, count: DEMO_SKILLS.length };
   },
