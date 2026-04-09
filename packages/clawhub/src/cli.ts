@@ -499,20 +499,19 @@ program
     await cmdSetRole(opts, handleOrId, role, options, isInputAllowed());
   });
 
-const transfer = program.command("transfer").description("Transfer skill/package ownership");
+const transfer = program.command("transfer").description("Transfer skill ownership");
 
 transfer
   .command("request")
-  .description("Request transfer to another user or organization")
-  .argument("<name>", "Skill slug or package name")
+  .description("Request skill transfer to another user or organization")
+  .argument("<slug>", "Skill slug")
   .argument("<handle>", "Recipient handle (e.g., @username)")
   .option("--message <text>", "Optional message for recipient")
-  .option("--type <type>", "Item type: skill or package (auto-detected if omitted)")
   .option("--publisher <handle>", "Target org publisher handle")
   .option("--yes", "Skip confirmation")
-  .action(async (name, handle, options) => {
+  .action(async (slug, handle, options) => {
     const opts = await resolveGlobalOpts();
-    await cmdTransferRequest(opts, name, handle, options, isInputAllowed());
+    await cmdTransferRequest(opts, slug, handle, options, isInputAllowed());
   });
 
 transfer
@@ -526,36 +525,33 @@ transfer
 
 transfer
   .command("accept")
-  .description("Accept incoming transfer")
-  .argument("<name>", "Skill slug or package name")
-  .option("--type <type>", "Item type: skill or package (auto-detected if omitted)")
-  .option("--publisher <handle>", "Target org publisher handle")
+  .description("Accept incoming skill transfer")
+  .argument("<slug>", "Skill slug")
+  .option("--publisher <handle>", "Accept to org publisher instead of personal")
   .option("--yes", "Skip confirmation")
-  .action(async (name, options) => {
+  .action(async (slug, options) => {
     const opts = await resolveGlobalOpts();
-    await cmdTransferAccept(opts, name, options, isInputAllowed());
+    await cmdTransferAccept(opts, slug, options, isInputAllowed());
   });
 
 transfer
   .command("reject")
-  .description("Reject incoming transfer")
-  .argument("<name>", "Skill slug or package name")
-  .option("--type <type>", "Item type: skill or package (auto-detected if omitted)")
+  .description("Reject incoming skill transfer")
+  .argument("<slug>", "Skill slug")
   .option("--yes", "Skip confirmation")
-  .action(async (name, options) => {
+  .action(async (slug, options) => {
     const opts = await resolveGlobalOpts();
-    await cmdTransferReject(opts, name, options, isInputAllowed());
+    await cmdTransferReject(opts, slug, options, isInputAllowed());
   });
 
 transfer
   .command("cancel")
-  .description("Cancel outgoing transfer")
-  .argument("<name>", "Skill slug or package name")
-  .option("--type <type>", "Item type: skill or package (auto-detected if omitted)")
+  .description("Cancel outgoing skill transfer")
+  .argument("<slug>", "Skill slug")
   .option("--yes", "Skip confirmation")
-  .action(async (name, options) => {
+  .action(async (slug, options) => {
     const opts = await resolveGlobalOpts();
-    await cmdTransferCancel(opts, name, options, isInputAllowed());
+    await cmdTransferCancel(opts, slug, options, isInputAllowed());
   });
 
 program
