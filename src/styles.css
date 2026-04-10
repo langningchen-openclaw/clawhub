@@ -4084,6 +4084,8 @@ code {
   max-width: 100%;
   color: var(--ink);
   font-size: var(--fs-base);
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
 .markdown > :first-child { margin-top: 0; }
@@ -4123,6 +4125,9 @@ code {
   color: var(--accent-deep);
   text-decoration: underline;
   text-underline-offset: 2px;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 .markdown a:hover { color: var(--accent); }
@@ -4146,11 +4151,20 @@ code {
 
 .markdown table {
   width: 100%;
+  max-width: 100%;
   border-collapse: collapse;
   font-size: var(--fs-sm);
   margin: var(--space-4) 0;
   overflow-x: auto;
   display: block;
+  table-layout: fixed;
+}
+
+.markdown td,
+.markdown th {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 .markdown th, .markdown td {
@@ -4183,6 +4197,9 @@ code {
   border-radius: var(--r-xs);
   font-size: 0.88em;
   font-family: var(--font-mono);
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-all;
 }
 
 .markdown pre {
@@ -6333,6 +6350,9 @@ html.theme-transition::view-transition-new(theme) {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  overflow-x: hidden;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
 /* Horizontal Metadata Bar */
@@ -6344,6 +6364,9 @@ html.theme-transition::view-transition-new(theme) {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-md);
+  overflow: hidden;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
 .meta-bar-stats {
