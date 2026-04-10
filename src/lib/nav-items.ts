@@ -23,6 +23,8 @@ export interface NavItem {
   soulModeOnly: boolean;
   /** Link hidden when siteMode === "souls" */
   soulModeHide: boolean;
+  /** Additional path prefixes that should also highlight this nav item (e.g. /skill for /skills) */
+  activePathPrefixes?: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -68,6 +70,7 @@ export const PRIMARY_NAV_ITEMS: NavItem[] = [
     staffOnly: false,
     soulModeOnly: false,
     soulModeHide: true,
+    activePathPrefixes: ["/skill/"],
   },
   {
     label: "Plugins",
@@ -77,6 +80,7 @@ export const PRIMARY_NAV_ITEMS: NavItem[] = [
     staffOnly: false,
     soulModeOnly: false,
     soulModeHide: true,
+    activePathPrefixes: ["/plugin/"],
   },
   {
     label: "Souls",
@@ -88,6 +92,7 @@ export const PRIMARY_NAV_ITEMS: NavItem[] = [
     soulModeOnly: false,
     // In soul-mode this is the primary tab; in skills-mode it is also shown.
     soulModeHide: false,
+    activePathPrefixes: ["/soul/"],
   },
 ];
 
