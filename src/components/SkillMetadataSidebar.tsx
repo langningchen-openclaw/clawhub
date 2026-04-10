@@ -3,7 +3,7 @@ import {
   PLATFORM_SKILL_LICENSE,
   PLATFORM_SKILL_LICENSE_SUMMARY,
 } from "clawhub-schema/licenseConstants";
-import { Package, Star } from "lucide-react";
+import { Calendar, Download, Package, Scale, Star, Tag } from "lucide-react";
 import type { Id } from "../../convex/_generated/dataModel";
 import { formatCompactStat } from "../lib/numberFormat";
 import type { PublicPublisher, PublicSkill } from "../lib/publicUser";
@@ -39,104 +39,83 @@ export function SkillMetadataSidebar({
   nixPlugin,
 }: SkillMetadataSidebarProps) {
   const convexSiteUrl = getRuntimeEnv("VITE_CONVEX_SITE_URL") ?? "https://clawhub.ai";
+  const showDownload = !nixPlugin && !isMalwareBlocked && !isRemoved;
 
   return (
-    <aside className="detail-sidebar">
-      {/* Download / Install */}
-      {!nixPlugin && !isMalwareBlocked && !isRemoved ? (
-        <div className="sidebar-card">
-          <h3 className="sidebar-card-title">Download</h3>
-          <Button asChild variant="primary" className="w-full justify-center">
-            <a href={`${convexSiteUrl}/api/v1/download?slug=${skill.slug}`}>
-              Download zip
-            </a>
-          </Button>
+    <div className="detail-meta-bar">
+      {/* Stats row */}
+      <div className="meta-bar-stats">
+        <div className="meta-stat">
+          <Download size={14} aria-hidden="true" />
+          <span className="meta-stat-value">{formatCompactStat(skill.stats.downloads)}</span>
+          <span className="meta-stat-label">downloads</span>
         </div>
-      ) : null}
-
-      {/* Stats */}
-      <div className="sidebar-card">
-        <h3 className="sidebar-card-title">Stats</h3>
-        <div className="sidebar-stat-grid">
-          <div className="sidebar-stat">
-            <span className="sidebar-stat-value">
-              <Package size={14} aria-hidden="true" />
-              {formatCompactStat(skill.stats.downloads)}
-            </span>
-            <span className="sidebar-stat-label">Downloads</span>
-          </div>
-          <div className="sidebar-stat">
-            <span className="sidebar-stat-value">
-              <Star size={14} aria-hidden="true" />
-              {formatCompactStat(skill.stats.stars)}
-            </span>
-            <span className="sidebar-stat-label">Stars</span>
-          </div>
-          <div className="sidebar-stat">
-            <span className="sidebar-stat-value">
-              {formatCompactStat(skill.stats.versions ?? 0)}
-            </span>
-            <span className="sidebar-stat-label">Versions</span>
-          </div>
+        <div className="meta-stat">
+          <Star size={14} aria-hidden="true" />
+          <span className="meta-stat-value">{formatCompactStat(skill.stats.stars)}</span>
+          <span className="meta-stat-label">stars</span>
+        </div>
+        <div className="meta-stat">
+          <Package size={14} aria-hidden="true" />
+          <span className="meta-stat-value">{formatCompactStat(skill.stats.versions ?? 0)}</span>
+          <span className="meta-stat-label">versions</span>
         </div>
       </div>
 
-      {/* Metadata */}
-      <div className="sidebar-card">
-        <h3 className="sidebar-card-title">Details</h3>
-        <dl className="sidebar-metadata">
-          <div className="sidebar-metadata-row">
-            <dt>Updated</dt>
-            <dd>{timeAgo(skill.updatedAt)}</dd>
+      {/* Details row */}
+      <div className="meta-bar-details">
+        <div className="meta-detail">
+          <Calendar size={12} aria-hidden="true" />
+          <span>Updated {timeAgo(skill.updatedAt)}</span>
+        </div>
+        {latestVersion?.version ? (
+          <div className="meta-detail">
+            <Tag size={12} aria-hidden="true" />
+            <span>v{latestVersion.version}</span>
           </div>
-          <div className="sidebar-metadata-row">
-            <dt>Created</dt>
-            <dd>{timeAgo(skill.createdAt)}</dd>
+        ) : null}
+        <div className="meta-detail">
+          <Scale size={12} aria-hidden="true" />
+          <span>{PLATFORM_SKILL_LICENSE}</span>
+        </div>
+        {osLabels.length > 0 ? (
+          <div className="meta-detail">
+            <span>{osLabels.join(", ")}</span>
           </div>
-          {latestVersion?.version ? (
-            <div className="sidebar-metadata-row">
-              <dt>Version</dt>
-              <dd>v{latestVersion.version}</dd>
-            </div>
-          ) : null}
-          <div className="sidebar-metadata-row">
-            <dt>License</dt>
-            <dd>{PLATFORM_SKILL_LICENSE} ({PLATFORM_SKILL_LICENSE_SUMMARY})</dd>
-          </div>
-          {osLabels.length ? (
-            <div className="sidebar-metadata-row">
-              <dt>Platforms</dt>
-              <dd>{osLabels.join(", ")}</dd>
-            </div>
-          ) : null}
-        </dl>
+        ) : null}
       </div>
 
-      {/* Tags */}
-      {tagEntries.length > 0 ? (
-        <div className="sidebar-card">
-          <h3 className="sidebar-card-title">Tags</h3>
-          <div className="sidebar-tags">
+      {/* Tags and Publisher row */}
+      <div className="meta-bar-footer">
+        <div className="meta-bar-publisher">
+          <UserBadge
+            user={owner}
+            fallbackHandle={ownerHandle}
+            prefix=""
+            size="sm"
+            showName
+          />
+        </div>
+        
+        {tagEntries.length > 0 ? (
+          <div className="meta-bar-tags">
             {tagEntries.map(([tag]) => (
               <Badge key={tag} variant="compact">
                 {tag}
               </Badge>
             ))}
           </div>
-        </div>
-      ) : null}
+        ) : null}
 
-      {/* Owner */}
-      <div className="sidebar-card">
-        <h3 className="sidebar-card-title">Publisher</h3>
-        <UserBadge
-          user={owner}
-          fallbackHandle={ownerHandle}
-          prefix=""
-          size="md"
-          showName
-        />
+        {showDownload ? (
+          <Button asChild variant="primary" size="sm">
+            <a href={`${convexSiteUrl}/api/v1/download?slug=${skill.slug}`}>
+              <Download size={14} aria-hidden="true" />
+              Download
+            </a>
+          </Button>
+        ) : null}
       </div>
-    </aside>
+    </div>
   );
 }
