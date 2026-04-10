@@ -36,20 +36,6 @@ function formatRetryDelay(retryAfterSeconds: number | null) {
 }
 
 export const Route = createFileRoute("/plugins/")({
-  errorComponent: ({ error }) => (
-    <main className="browse-page">
-      <div className="browse-page-header">
-        <h1 className="browse-title">Plugins</h1>
-      </div>
-      <div className="empty-state">
-        <AlertTriangle size={20} aria-hidden="true" />
-        <p className="empty-state-title">Unable to load plugins</p>
-        <p className="empty-state-body">
-          {error?.message || "The plugin catalog is temporarily unavailable. Please try again later."}
-        </p>
-      </div>
-    </main>
-  ),
   validateSearch: (search): PluginSearchState => ({
     q: typeof search.q === "string" && search.q.trim() ? search.q.trim() : undefined,
     cursor: typeof search.cursor === "string" && search.cursor ? search.cursor : undefined,
@@ -69,9 +55,15 @@ export const Route = createFileRoute("/plugins/")({
         : undefined,
   }),
   loaderDeps: ({ search }) => search,
-  loader: async ({ deps }) => {
+  loader: async ({ deps }): Promise<PluginsLoaderData> => {
+    // Return empty data if API is unavailable - don't throw
+    let data: { items?: PackageListItem[]; nextCursor?: string | null } | null = null;
+    let apiError = false;
+    let rateLimited = false;
+    let retryAfterSeconds: number | null = null;
+
     try {
-      const data = await fetchPluginCatalog({
+      data = await fetchPluginCatalog({
         q: deps.q,
         cursor: deps.q ? undefined : deps.cursor,
         family: deps.family,
@@ -79,36 +71,28 @@ export const Route = createFileRoute("/plugins/")({
         executesCode: deps.executesCode,
         limit: 50,
       });
-      return {
-        items: data.items ?? [],
-        nextCursor: data.nextCursor ?? null,
-        rateLimited: false,
-        retryAfterSeconds: null,
-      } satisfies PluginsLoaderData;
     } catch (error) {
       if (isRateLimitedPackageApiError(error)) {
-        return {
-          items: [],
-          nextCursor: null,
-          rateLimited: true,
-          retryAfterSeconds: (error as { retryAfterSeconds?: number }).retryAfterSeconds ?? null,
-        } satisfies PluginsLoaderData;
+        rateLimited = true;
+        retryAfterSeconds = (error as { retryAfterSeconds?: number }).retryAfterSeconds ?? null;
+      } else {
+        // Log but don't crash - return empty state
+        apiError = true;
       }
-      // Handle API errors gracefully instead of crashing
-      console.error("[plugins loader]", error);
-      return {
-        items: [],
-        nextCursor: null,
-        rateLimited: false,
-        retryAfterSeconds: null,
-        apiError: true,
-      } satisfies PluginsLoaderData;
     }
+
+    return {
+      items: data?.items ?? [],
+      nextCursor: data?.nextCursor ?? null,
+      rateLimited,
+      retryAfterSeconds,
+      apiError,
+    };
   },
   component: PluginsIndex,
 });
 
-export function PluginsIndex() {
+function PluginsIndex() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const { items, nextCursor, rateLimited, retryAfterSeconds, apiError } =

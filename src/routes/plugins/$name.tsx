@@ -35,17 +35,6 @@ type PluginDetailLoaderData = {
 };
 
 export const Route = createFileRoute("/plugins/$name")({
-  errorComponent: ({ error }) => (
-    <Container narrow>
-      <div className="empty-state">
-        <AlertTriangle size={20} aria-hidden="true" />
-        <p className="empty-state-title">Unable to load plugin</p>
-        <p className="empty-state-body">
-          {error?.message || "This plugin could not be loaded. Please try again later."}
-        </p>
-      </div>
-    </Container>
-  ),
   loader: async ({ params }): Promise<PluginDetailLoaderData> => {
     const requestedName = params.name;
     const candidateNames = requestedName.includes("/")
