@@ -65,12 +65,13 @@ export const Route = createFileRoute("/plugins/")({
       limit: 50,
     });
 
+    const items = data?.items ?? [];
     return {
-      items: data.items ?? [],
-      nextCursor: data.nextCursor ?? null,
+      items,
+      nextCursor: data?.nextCursor ?? null,
       rateLimited: false,
       retryAfterSeconds: null,
-      apiError: data.items.length === 0 && !deps.q,
+      apiError: items.length === 0 && !deps.q,
     };
   },
   component: PluginsIndex,

@@ -311,15 +311,15 @@ export async function fetchPluginCatalog(params: {
       });
       if (hasOwnProperty(response, "results") && Array.isArray(response.results)) {
         return {
-          items: response.results.map((entry) => entry.package),
+          items: response.results.map((entry) => entry?.package).filter(Boolean) as PackageListItem[],
           nextCursor: null,
         };
       }
 
       const browseResponse = response as PackageCatalogBrowseResponse;
       return {
-        items: browseResponse.items,
-        nextCursor: browseResponse.nextCursor,
+        items: browseResponse?.items ?? [],
+        nextCursor: browseResponse?.nextCursor ?? null,
       };
     }
 
@@ -334,10 +334,10 @@ export async function fetchPluginCatalog(params: {
         url.searchParams.set("executesCode", String(params.executesCode));
       }
       const response = await fetchJson<{
-        results: Array<{ score: number; package: PackageListItem }>;
+        results?: Array<{ score: number; package: PackageListItem }>;
       }>(url);
       return {
-        items: response.results.map((entry) => entry.package),
+        items: (response?.results ?? []).map((entry) => entry?.package).filter(Boolean) as PackageListItem[],
         nextCursor: null,
       };
     }
@@ -351,7 +351,11 @@ export async function fetchPluginCatalog(params: {
     if (typeof params.executesCode === "boolean") {
       url.searchParams.set("executesCode", String(params.executesCode));
     }
-    return await fetchJson<PluginCatalogResult>(url);
+    const result = await fetchJson<PluginCatalogResult>(url);
+    return {
+      items: result?.items ?? [],
+      nextCursor: result?.nextCursor ?? null,
+    };
   } catch {
     // Return empty result on API error to prevent SSR crashes
     return { items: [], nextCursor: null };
