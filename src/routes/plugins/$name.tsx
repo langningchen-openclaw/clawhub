@@ -35,6 +35,17 @@ type PluginDetailLoaderData = {
 };
 
 export const Route = createFileRoute("/plugins/$name")({
+  errorComponent: ({ error }) => (
+    <Container narrow>
+      <div className="empty-state">
+        <AlertTriangle size={20} aria-hidden="true" />
+        <p className="empty-state-title">Unable to load plugin</p>
+        <p className="empty-state-body">
+          {error?.message || "This plugin could not be loaded. Please try again later."}
+        </p>
+      </div>
+    </Container>
+  ),
   loader: async ({ params }): Promise<PluginDetailLoaderData> => {
     const requestedName = params.name;
     const candidateNames = requestedName.includes("/")
@@ -59,7 +70,14 @@ export const Route = createFileRoute("/plugins/$name")({
             },
           };
         }
-        throw error;
+        // Handle API errors gracefully instead of crashing
+        console.error("[plugin detail loader]", error);
+        return {
+          detail: { package: null, owner: null },
+          version: null,
+          readme: null,
+          rateLimited: null,
+        };
       }
       if (candidateDetail.package) {
         detail = candidateDetail;
@@ -80,20 +98,26 @@ export const Route = createFileRoute("/plugins/$name")({
 
     let metadataRateLimited: PluginDetailRateLimitState = null;
     const readmePromise = fetchPackageReadme(resolvedName).catch((error: unknown) => {
-      if (!isRateLimitedPackageApiError(error)) throw error;
-      metadataRateLimited ??= {
-        scope: "metadata",
-        retryAfterSeconds: error.retryAfterSeconds,
-      };
+      if (isRateLimitedPackageApiError(error)) {
+        metadataRateLimited ??= {
+          scope: "metadata",
+          retryAfterSeconds: error.retryAfterSeconds,
+        };
+      } else {
+        console.error("[plugin readme loader]", error);
+      }
       return null;
     });
     const versionPromise = detail.package?.latestVersion
       ? fetchPackageVersion(resolvedName, detail.package.latestVersion).catch((error: unknown) => {
-          if (!isRateLimitedPackageApiError(error)) throw error;
-          metadataRateLimited ??= {
-            scope: "metadata",
-            retryAfterSeconds: error.retryAfterSeconds,
-          };
+          if (isRateLimitedPackageApiError(error)) {
+            metadataRateLimited ??= {
+              scope: "metadata",
+              retryAfterSeconds: error.retryAfterSeconds,
+            };
+          } else {
+            console.error("[plugin version loader]", error);
+          }
           return null;
         })
       : Promise.resolve(null);
