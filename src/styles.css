@@ -235,6 +235,65 @@
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
+/* ===== User Preferences ===== */
+
+/* Layout Density */
+[data-density="compact"] {
+  --space-1: 0.125rem;
+  --space-2: 0.25rem;
+  --space-3: 0.375rem;
+  --space-4: 0.5rem;
+  --space-5: 0.75rem;
+  --fs-base: 0.875rem;
+}
+
+/* Animation Level */
+[data-animation="reduced"],
+.reduce-motion {
+  --transition-fast: 0ms;
+  --transition-base: 0ms;
+  --transition-slow: 0ms;
+}
+
+[data-animation="reduced"] *,
+.reduce-motion * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+[data-animation="none"] *,
+[data-animation="none"]::before,
+[data-animation="none"]::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* High Contrast Mode */
+.high-contrast {
+  --ink: #000000;
+  --ink-soft: #333333;
+  --line: rgba(0, 0, 0, 0.2);
+  --border-ui: rgba(0, 0, 0, 0.25);
+}
+
+.high-contrast[data-theme="dark"],
+[data-theme="dark"].high-contrast {
+  --ink: #ffffff;
+  --ink-soft: #e5e5e5;
+  --line: rgba(255, 255, 255, 0.2);
+  --border-ui: rgba(255, 255, 255, 0.25);
+}
+
+/* Code font size variable (set by JS) */
+:root {
+  --code-font-size: 14px;
+}
+
+pre, code, .code-block {
+  font-size: var(--code-font-size);
+}
+
 * {
   box-sizing: border-box;
 }
