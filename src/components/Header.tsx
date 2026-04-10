@@ -1,5 +1,5 @@
 import { useAuthActions } from "@convex-dev/auth/react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { Ghost, Github, Menu, Monitor, Moon, Plug, Search, Sun, Wrench } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { getUserFacingAuthError } from "../lib/authErrorMessage";
@@ -42,6 +42,7 @@ export default function Header() {
   const isSoulMode = siteMode === "souls";
   const clawHubUrl = getClawHubSiteUrl();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const avatar = me?.image ?? (me?.email ? gravatarUrl(me.email) : undefined);
   const handle = me?.handle ?? me?.displayName ?? "user";
@@ -277,12 +278,16 @@ export default function Header() {
             ) : null}
             {primaryItems.map((item) => {
               const Icon = item.icon ? NAV_ICONS[item.icon] : null;
+              const isActiveByPrefix = item.activePathPrefixes?.some((prefix) =>
+                location.pathname.startsWith(prefix)
+              );
               return (
                 <Link
                   key={item.to + item.label}
                   to={item.to}
                   className="navbar-tab"
                   search={item.search ?? {}}
+                  data-status={isActiveByPrefix ? "active" : undefined}
                 >
                   {Icon ? <Icon size={14} className="opacity-50" aria-hidden="true" /> : null}
                   {item.label}
@@ -291,16 +296,22 @@ export default function Header() {
             })}
           </div>
           <div className="navbar-tabs-secondary">
-            {secondaryItems.map((item) => (
-              <Link
-                key={item.to + item.label}
-                to={item.to}
-                search={item.search ?? {}}
-                className="navbar-tab navbar-tab-secondary"
-              >
-                {item.label === "Management" ? "Manage" : item.label}
-              </Link>
-            ))}
+            {secondaryItems.map((item) => {
+              const isActiveByPrefix = item.activePathPrefixes?.some((prefix) =>
+                location.pathname.startsWith(prefix)
+              );
+              return (
+                <Link
+                  key={item.to + item.label}
+                  to={item.to}
+                  search={item.search ?? {}}
+                  className="navbar-tab navbar-tab-secondary"
+                  data-status={isActiveByPrefix ? "active" : undefined}
+                >
+                  {item.label === "Management" ? "Manage" : item.label}
+                </Link>
+              );
+            })}
           </div>
         </nav>
       </div>

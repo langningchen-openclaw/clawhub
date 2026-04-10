@@ -401,78 +401,76 @@ export function SkillDetailPage({
           />
         ) : null}
 
-        <div className="detail-layout">
-          <div className="detail-main">
-            {nixSnippet ? (
-              <Card>
-                <h3 className="m-0 text-[length:var(--text-base)] font-semibold">
-                  Install via Nix
-                </h3>
-                <pre className="hero-install-code mt-2">
-                  {nixSnippet}
-                </pre>
-              </Card>
-            ) : null}
+        <SkillMetadataSidebar
+          skill={skill}
+          latestVersion={latestVersion}
+          owner={owner}
+          ownerHandle={ownerHandle}
+          clawdis={clawdis}
+          osLabels={osLabels}
+          tagEntries={tagEntries}
+          isMalwareBlocked={modInfo?.isMalwareBlocked}
+          isRemoved={modInfo?.isRemoved}
+          nixPlugin={nixPlugin}
+        />
 
-            {configExample ? (
-              <Card>
-                <h3 className="m-0 text-[length:var(--text-base)] font-semibold">
-                  Config example
-                </h3>
-                <pre className="hero-install-code mt-2">
-                  {configExample}
-                </pre>
-              </Card>
-            ) : null}
+        <div className="detail-content-full">
+          {nixSnippet ? (
+            <Card>
+              <h3 className="m-0 text-[length:var(--text-base)] font-semibold">
+                Install via Nix
+              </h3>
+              <pre className="hero-install-code mt-2">
+                {nixSnippet}
+              </pre>
+            </Card>
+          ) : null}
 
-            <SkillDetailTabs
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              onCompareIntent={() => setShouldPrefetchCompare(true)}
-              readmeContent={readmeContent}
-              readmeError={readmeError}
-              latestFiles={latestFiles}
-              latestVersionId={latestVersion?._id ?? null}
-              skill={skill as Doc<"skills">}
-              diffVersions={diffVersions}
-              versions={versions}
-              nixPlugin={Boolean(nixPlugin)}
-              suppressVersionScanResults={suppressVersionScanResults}
-              scanResultsSuppressedMessage={scanResultsSuppressedMessage}
-            />
+          {configExample ? (
+            <Card>
+              <h3 className="m-0 text-[length:var(--text-base)] font-semibold">
+                Config example
+              </h3>
+              <pre className="hero-install-code mt-2">
+                {configExample}
+              </pre>
+            </Card>
+          ) : null}
 
-            <ClientOnly
-              fallback={
-                <Card>
-                  <h2 className="section-title text-[1.2rem] m-0">
-                    Comments
-                  </h2>
-                  <p className="section-subtitle mt-3 mb-0">
-                    Loading comments...
-                  </p>
-                </Card>
-              }
-            >
-              <SkillCommentsPanel
-                skillId={skill._id}
-                isAuthenticated={isAuthenticated}
-                me={me ?? null}
-              />
-            </ClientOnly>
-          </div>
-
-          <SkillMetadataSidebar
-            skill={skill}
-            latestVersion={latestVersion}
-            owner={owner}
-            ownerHandle={ownerHandle}
-            clawdis={clawdis}
-            osLabels={osLabels}
-            tagEntries={tagEntries}
-            isMalwareBlocked={modInfo?.isMalwareBlocked}
-            isRemoved={modInfo?.isRemoved}
-            nixPlugin={nixPlugin}
+          <SkillDetailTabs
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            onCompareIntent={() => setShouldPrefetchCompare(true)}
+            readmeContent={readmeContent}
+            readmeError={readmeError}
+            latestFiles={latestFiles}
+            latestVersionId={latestVersion?._id ?? null}
+            skill={skill as Doc<"skills">}
+            diffVersions={diffVersions}
+            versions={versions}
+            nixPlugin={Boolean(nixPlugin)}
+            suppressVersionScanResults={suppressVersionScanResults}
+            scanResultsSuppressedMessage={scanResultsSuppressedMessage}
           />
+
+          <ClientOnly
+            fallback={
+              <Card>
+                <h2 className="section-title text-[1.2rem] m-0">
+                  Comments
+                </h2>
+                <p className="section-subtitle mt-3 mb-0">
+                  Loading comments...
+                </p>
+              </Card>
+            }
+          >
+            <SkillCommentsPanel
+              skillId={skill._id}
+              isAuthenticated={isAuthenticated}
+              me={me ?? null}
+            />
+          </ClientOnly>
         </div>
       </div>
 

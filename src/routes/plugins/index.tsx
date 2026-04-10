@@ -6,7 +6,6 @@ import { PluginListItem } from "../../components/PluginListItem";
 import { Button } from "../../components/ui/button";
 import {
   fetchPluginCatalog,
-  isRateLimitedPackageApiError,
   type PackageListItem,
 } from "../../lib/packageApi";
 
@@ -23,6 +22,7 @@ type PluginsLoaderData = {
   nextCursor: string | null;
   rateLimited: boolean;
   retryAfterSeconds: number | null;
+  apiError?: boolean;
 };
 
 function formatRetryDelay(retryAfterSeconds: number | null) {
@@ -54,42 +54,41 @@ export const Route = createFileRoute("/plugins/")({
         : undefined,
   }),
   loaderDeps: ({ search }) => search,
-  loader: async ({ deps }) => {
-    try {
-      const data = await fetchPluginCatalog({
-        q: deps.q,
-        cursor: deps.q ? undefined : deps.cursor,
-        family: deps.family,
-        isOfficial: deps.verified,
-        executesCode: deps.executesCode,
-        limit: 50,
-      });
-      return {
-        items: data.items ?? [],
-        nextCursor: data.nextCursor ?? null,
-        rateLimited: false,
-        retryAfterSeconds: null,
-      } satisfies PluginsLoaderData;
-    } catch (error) {
-      if (isRateLimitedPackageApiError(error)) {
-        return {
-          items: [],
-          nextCursor: null,
-          rateLimited: true,
-          retryAfterSeconds: (error as { retryAfterSeconds?: number }).retryAfterSeconds ?? null,
-        } satisfies PluginsLoaderData;
-      }
-      throw error;
-    }
+  loader: async ({ deps }): Promise<PluginsLoaderData> => {
+    // fetchPluginCatalog now handles errors internally and returns empty results
+    const data = await fetchPluginCatalog({
+      q: deps.q,
+      cursor: deps.q ? undefined : deps.cursor,
+      family: deps.family,
+      isOfficial: deps.verified,
+      executesCode: deps.executesCode,
+      limit: 50,
+    });
+
+    const items = data?.items ?? [];
+    return {
+      items,
+      nextCursor: data?.nextCursor ?? null,
+      rateLimited: false,
+      retryAfterSeconds: null,
+      apiError: items.length === 0 && !deps.q,
+    };
   },
   component: PluginsIndex,
 });
 
-export function PluginsIndex() {
+function PluginsIndex() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
-  const { items, nextCursor, rateLimited, retryAfterSeconds } =
-    Route.useLoaderData() as PluginsLoaderData;
+  const loaderData = Route.useLoaderData() as PluginsLoaderData | undefined;
+  
+  // Defensive handling for when loader data is unavailable (SSR errors, etc.)
+  const items = loaderData?.items ?? [];
+  const nextCursor = loaderData?.nextCursor ?? null;
+  const rateLimited = loaderData?.rateLimited ?? false;
+  const retryAfterSeconds = loaderData?.retryAfterSeconds ?? null;
+  const apiError = loaderData?.apiError ?? !loaderData;
+  
   const [query, setQuery] = useState(search.q ?? "");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -201,7 +200,15 @@ export function PluginsIndex() {
             </span>
           </div>
 
-          {rateLimited ? (
+          {apiError ? (
+            <div className="empty-state">
+              <AlertTriangle size={20} aria-hidden="true" />
+              <p className="empty-state-title">Unable to load plugins</p>
+              <p className="empty-state-body">
+                The plugin catalog is temporarily unavailable. Please try again later.
+              </p>
+            </div>
+          ) : rateLimited ? (
             <div className="empty-state">
               <AlertTriangle size={20} aria-hidden="true" />
               <p className="empty-state-title">Plugin catalog is temporarily unavailable</p>
