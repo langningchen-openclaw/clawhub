@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { acceptTransferInternal, requestTransferInternal } from "./skillTransfers";
+import { acceptTransferInternal, cancelTransferInternal, requestTransferInternal } from "./skillTransfers";
 
 type WrappedHandler<TArgs, TResult = unknown> = {
   _handler: (ctx: unknown, args: TArgs) => Promise<TResult>;
@@ -16,6 +16,13 @@ const requestTransferInternalHandler = (
 
 const acceptTransferInternalHandler = (
   acceptTransferInternal as unknown as WrappedHandler<{
+    actorUserId: string;
+    transferId: string;
+  }>
+)._handler;
+
+const cancelTransferInternalHandler = (
+  cancelTransferInternal as unknown as WrappedHandler<{
     actorUserId: string;
     transferId: string;
   }>
@@ -393,6 +400,57 @@ describe("skillTransfers", () => {
       "skills:1",
       expect.objectContaining({ ownerUserId: "users:2" }),
     );
+  });
+
+  it("cancelTransferInternal hides personal-publisher transfer existence from other users", async () => {
+    await expect(
+      cancelTransferInternalHandler(
+        {
+          db: {
+            normalizeId: vi.fn(),
+            get: vi.fn(async (id: string) => {
+              if (id === "users:2") return { _id: "users:2", handle: "other-user" };
+              if (id === "skillOwnershipTransfers:1") {
+                return {
+                  _id: "skillOwnershipTransfers:1",
+                  skillId: "skills:1",
+                  fromUserId: "users:1",
+                  fromPublisherId: "publishers:owner",
+                  status: "pending",
+                  requestedAt: Date.now() - 1_000,
+                  expiresAt: Date.now() + 10_000,
+                };
+              }
+              if (id === "publishers:owner") {
+                return {
+                  _id: "publishers:owner",
+                  kind: "user",
+                  linkedUserId: "users:1",
+                  handle: "owner",
+                };
+              }
+              return null;
+            }),
+            query: vi.fn((table: string) => {
+              if (table === "publisherMembers") {
+                return {
+                  withIndex: () => ({
+                    unique: async () => null,
+                  }),
+                };
+              }
+              throw new Error(`unexpected table ${table}`);
+            }),
+            patch: vi.fn(async () => {}),
+            insert: vi.fn(async () => "auditLogs:1"),
+          },
+        } as never,
+        {
+          actorUserId: "users:2",
+          transferId: "skillOwnershipTransfers:1",
+        } as never,
+      ),
+    ).rejects.toThrow(/No pending transfer found/);
   });
 
   it("requestTransferInternal allows org admin to request transfer", async () => {

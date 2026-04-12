@@ -71,7 +71,8 @@ export async function validateTransferOwnership(
  * - If `toPublisherId` is null (personal target): actor must be `toUserId`.
  * - If `toPublisherId` is set (org target): actor must be admin/owner of that org.
  *
- * @throws {Error} "No pending transfer found" on failure
+ * @throws {Error} "No pending transfer found" on permission failure
+ * @throws {Error} "Publisher not found" when `toPublisherId` points to an inactive/deleted publisher
  */
 export async function validateTransferAcceptPermission(
   ctx: DbCtx,

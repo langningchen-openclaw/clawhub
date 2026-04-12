@@ -1470,9 +1470,6 @@ function packageTransferErrorToResponse(error: unknown, headers: HeadersInit) {
   if (lower.includes("unauthorized")) return text("Unauthorized", 401, headers);
   if (lower.includes("forbidden")) return text("Forbidden", 403, headers);
   if (lower.includes("not found")) return text(message, 404, headers);
-  if (lower.includes("required") || lower.includes("invalid") || lower.includes("pending")) {
-    return text(message, 400, headers);
-  }
   return text(message, 400, headers);
 }
 
@@ -1570,37 +1567,35 @@ async function handlePackageTransferDecision(
 
   const pendingTransfer = await runQueryRef<PendingTransferLike | null>(
     ctx,
-    internalRefs.packageTransfers.getPendingTransferByPackageInternal,
+    internal.packageTransfers.getPendingTransferByPackageInternal,
     { packageId: transferContext.pkg._id },
   );
   if (!pendingTransfer) return text("No pending transfer found", 404, headers);
 
   const mutation =
     decision === "accept"
-      ? internalRefs.packageTransfers.acceptTransferInternal
+      ? internal.packageTransfers.acceptTransferInternal
       : decision === "reject"
-        ? internalRefs.packageTransfers.rejectTransferInternal
-        : internalRefs.packageTransfers.cancelTransferInternal;
+        ? internal.packageTransfers.rejectTransferInternal
+        : internal.packageTransfers.cancelTransferInternal;
 
   try {
     // For accept, resolve optional publisher handle to forward publisherId
     let publisherId: Id<"publishers"> | undefined;
     if (decision === "accept") {
       const parsed = await parseJsonPayload(request, headers);
-      if (parsed.ok) {
-        const publisherHandleRaw =
-          typeof parsed.payload.publisherHandle === "string"
-            ? parsed.payload.publisherHandle.trim()
-            : "";
-        if (publisherHandleRaw) {
-          const publisher = await runQueryRef<{ _id: Id<"publishers"> } | null>(
-            ctx,
-            internalRefs.publishers.getByHandleInternal,
-            { handle: publisherHandleRaw },
-          );
-          if (!publisher) return text("Publisher not found", 404, headers);
-          publisherId = publisher._id;
-        }
+      if (!parsed.ok) return parsed.response;
+
+      const publisherHandleRaw =
+        typeof parsed.payload.publisherHandle === "string"
+          ? parsed.payload.publisherHandle.trim()
+          : "";
+      if (publisherHandleRaw) {
+        const publisher = await ctx.runQuery(internal.publishers.getByHandleInternal, {
+          handle: publisherHandleRaw,
+        });
+        if (!publisher) return text("Publisher not found", 404, headers);
+        publisherId = publisher._id;
       }
     }
 

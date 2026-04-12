@@ -3,17 +3,6 @@ import type { ActionCtx } from "../_generated/server";
 import { applyRateLimit } from "../lib/httpRateLimit";
 import { getPathSegments, json, requireApiTokenUserOrResponse, text } from "./shared";
 
-const internalRefs = internal as unknown as {
-  packageTransfers: {
-    listIncomingInternal: unknown;
-    listOutgoingInternal: unknown;
-  };
-};
-
-async function runQueryRef<T>(ctx: ActionCtx, ref: unknown, args: unknown): Promise<T> {
-  return (await ctx.runQuery(ref as never, args as never)) as T;
-}
-
 export async function transfersGetRouterV1Handler(ctx: ActionCtx, request: Request) {
   const rate = await applyRateLimit(ctx, request, "read");
   if (!rate.ok) return rate.response;
@@ -32,8 +21,8 @@ export async function transfersGetRouterV1Handler(ctx: ActionCtx, request: Reque
       ? ctx.runQuery(internal.skillTransfers.listIncomingInternal, { userId: auth.userId })
       : ctx.runQuery(internal.skillTransfers.listOutgoingInternal, { userId: auth.userId }),
     direction === "incoming"
-      ? runQueryRef<unknown[]>(ctx, internalRefs.packageTransfers.listIncomingInternal, { userId: auth.userId })
-      : runQueryRef<unknown[]>(ctx, internalRefs.packageTransfers.listOutgoingInternal, { userId: auth.userId }),
+      ? ctx.runQuery(internal.packageTransfers.listIncomingInternal, { userId: auth.userId })
+      : ctx.runQuery(internal.packageTransfers.listOutgoingInternal, { userId: auth.userId }),
   ]);
 
   const transfers = [...skillTransfers, ...packageTransfers].sort(

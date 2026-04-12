@@ -113,14 +113,26 @@ async function validatePendingTransferForActor(
     // validateTransferAcceptPermission handles org membership validation separately
     throw new Error("No pending transfer found");
   }
-  if (
-    params.role === "sender" &&
-    transfer.fromUserId !== params.actorUserId &&
-    !transfer.fromPublisherId
-  ) {
-    // For org-owned items (fromPublisherId is set), skip this check —
-    // the cancel handler validates org membership separately
-    throw new Error("No pending transfer found");
+  if (params.role === "sender") {
+    if (!transfer.fromPublisherId && transfer.fromUserId !== params.actorUserId) {
+      // Personal transfer: actor must be the original sender
+      throw new Error("No pending transfer found");
+    }
+    if (transfer.fromPublisherId) {
+      const publisherDb = (ctx as {
+        db: { get: (id: Id<"publishers">) => Promise<Doc<"publishers"> | null> };
+      }).db;
+      const fromPublisher = await publisherDb.get(transfer.fromPublisherId);
+      if (
+        fromPublisher &&
+        fromPublisher.kind === "user" &&
+        transfer.fromUserId !== params.actorUserId
+      ) {
+        throw new Error("No pending transfer found");
+      }
+    }
+    // Org-owned transfer: actor's org membership is verified by the caller
+    // (e.g. cancelTransferInternal calls validateTransferOwnership after this)
   }
   if (transfer.status !== "pending") throw new Error("No pending transfer found");
   if (isTransferExpired(transfer, params.now)) {

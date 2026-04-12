@@ -108,6 +108,19 @@ async function validatePendingTransferForActor(
       // Personal transfer: actor must be the original sender
       throw new Error("No pending transfer found");
     }
+    if (transfer.fromPublisherId) {
+      const publisherDb = (ctx as {
+        db: { get: (id: Id<"publishers">) => Promise<Doc<"publishers"> | null> };
+      }).db;
+      const fromPublisher = await publisherDb.get(transfer.fromPublisherId);
+      if (
+        fromPublisher &&
+        fromPublisher.kind === "user" &&
+        transfer.fromUserId !== params.actorUserId
+      ) {
+        throw new Error("No pending transfer found");
+      }
+    }
     // Org-owned transfer: actor's org membership is verified by the caller
     // (e.g. cancelTransferInternal calls validateTransferOwnership after this)
   }

@@ -1017,18 +1017,18 @@ async function handleTransferDecision(
     let publisherId: Id<"publishers"> | undefined;
     if (decision === "accept") {
       const parsed = await parseJsonPayload(request, headers);
-      if (parsed.ok) {
-        const publisherHandleRaw =
-          typeof parsed.payload.publisherHandle === "string"
-            ? parsed.payload.publisherHandle.trim()
-            : "";
-        if (publisherHandleRaw) {
-          const publisher = await ctx.runQuery(internal.publishers.getByHandleInternal, {
-            handle: publisherHandleRaw,
-          });
-          if (!publisher) return text("Publisher not found", 404, headers);
-          publisherId = publisher._id;
-        }
+      if (!parsed.ok) return parsed.response;
+
+      const publisherHandleRaw =
+        typeof parsed.payload.publisherHandle === "string"
+          ? parsed.payload.publisherHandle.trim()
+          : "";
+      if (publisherHandleRaw) {
+        const publisher = await ctx.runQuery(internal.publishers.getByHandleInternal, {
+          handle: publisherHandleRaw,
+        });
+        if (!publisher) return text("Publisher not found", 404, headers);
+        publisherId = publisher._id;
       }
     }
 

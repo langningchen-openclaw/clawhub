@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   acceptTransferInternal,
+  cancelTransferInternal,
   listIncomingInternal,
   requestTransferInternal,
 } from "./packageTransfers";
@@ -24,6 +25,13 @@ const acceptTransferInternalHandler = (
     actorUserId: string;
     transferId: string;
     publisherId?: string;
+  }>
+)._handler;
+
+const cancelTransferInternalHandler = (
+  cancelTransferInternal as unknown as WrappedHandler<{
+    actorUserId: string;
+    transferId: string;
   }>
 )._handler;
 
@@ -357,6 +365,57 @@ describe("packageTransfers", () => {
       "packages:1",
       expect.objectContaining({ ownerUserId: "users:2" }),
     );
+  });
+
+  it("cancelTransferInternal hides personal-publisher transfer existence from other users", async () => {
+    await expect(
+      cancelTransferInternalHandler(
+        {
+          db: {
+            normalizeId: vi.fn(),
+            get: vi.fn(async (id: string) => {
+              if (id === "users:2") return { _id: "users:2", handle: "other-user" };
+              if (id === "packageOwnershipTransfers:1") {
+                return {
+                  _id: "packageOwnershipTransfers:1",
+                  packageId: "packages:1",
+                  fromUserId: "users:1",
+                  fromPublisherId: "publishers:owner",
+                  status: "pending",
+                  requestedAt: Date.now() - 1_000,
+                  expiresAt: Date.now() + 10_000,
+                };
+              }
+              if (id === "publishers:owner") {
+                return {
+                  _id: "publishers:owner",
+                  kind: "user",
+                  linkedUserId: "users:1",
+                  handle: "owner",
+                };
+              }
+              return null;
+            }),
+            query: vi.fn((table: string) => {
+              if (table === "publisherMembers") {
+                return {
+                  withIndex: () => ({
+                    unique: async () => null,
+                  }),
+                };
+              }
+              throw new Error(`unexpected table ${table}`);
+            }),
+            patch: vi.fn(async () => {}),
+            insert: vi.fn(async () => "auditLogs:1"),
+          },
+        } as never,
+        {
+          actorUserId: "users:2",
+          transferId: "packageOwnershipTransfers:1",
+        } as never,
+      ),
+    ).rejects.toThrow(/No pending transfer found/);
   });
 
   it("listIncomingInternal includes org-targeted package transfers for org admins", async () => {

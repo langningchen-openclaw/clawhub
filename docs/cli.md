@@ -191,9 +191,12 @@ Stores your API token + cached registry URL.
 - Endpoints:
   - `POST /api/v1/skills/{slug}/transfer` (skills)
   - `POST /api/v1/packages/{name}/transfer` (packages)
-  - `POST /api/v1/{skills|packages}/{id}/transfer/accept`
-  - `POST /api/v1/{skills|packages}/{id}/transfer/reject`
-  - `POST /api/v1/{skills|packages}/{id}/transfer/cancel`
+  - `POST /api/v1/skills/{slug}/transfer/accept`
+  - `POST /api/v1/skills/{slug}/transfer/reject`
+  - `POST /api/v1/skills/{slug}/transfer/cancel`
+  - `POST /api/v1/packages/{name}/transfer/accept`
+  - `POST /api/v1/packages/{name}/transfer/reject`
+  - `POST /api/v1/packages/{name}/transfer/cancel`
   - `GET /api/v1/transfers/incoming`
   - `GET /api/v1/transfers/outgoing`
 
