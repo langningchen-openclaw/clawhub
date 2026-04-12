@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import type { ActionCtx, MutationCtx } from "./_generated/server";
+import type { ActionCtx, MutationCtx, QueryCtx } from "./_generated/server";
 import { internalAction, internalMutation, internalQuery, mutation, query } from "./functions";
 import {
   assertAdmin,
@@ -403,13 +403,7 @@ function computeUserSearchScanLimit(limit: number) {
 }
 
 async function queryUsersForAdminList(
-  ctx: {
-    db: {
-      query: (table: "users") => {
-        order: (order: "desc") => { take: (n: number) => Promise<Doc<"users">[]> };
-      };
-    };
-  },
+  ctx: Pick<QueryCtx, "db">,
   args: { limit: number; search?: string; exactUserId?: Id<"users"> },
 ) {
   const normalizedSearch = normalizeSearchQuery(args.search);
