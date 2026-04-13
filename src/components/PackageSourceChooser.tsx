@@ -8,9 +8,6 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 
-const OPENCLAW_PLUGIN_PACKAGE_METADATA_DOCS_URL =
-  'https://docs.openclaw.ai/plugins/sdk-setup#package-metadata';
-
 export function PackageSourceChooser(props: {
   files: File[];
   totalBytes: number;
@@ -158,12 +155,7 @@ export function PackageSourceChooser(props: {
         <Badge variant="accent">
           Missing required OpenClaw package metadata: {props.codePluginFieldIssues.join(", ")}. Add
           these fields to <code>package.json</code> before publishing. See{" "}
-          <a
-            href={OPENCLAW_PLUGIN_PACKAGE_METADATA_DOCS_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline"
-          >
+          <a href="/plugins/sdk-setup#package-metadata" className="underline">
             Plugin Setup and Config
           </a>
           .

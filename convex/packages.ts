@@ -4,7 +4,6 @@ import {
   type PackageChannel,
   type PackageFamily,
   type PackagePublishRequest,
-  type PackageVerificationTier,
 } from "clawhub-schema";
 import { paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
@@ -128,7 +127,7 @@ type PublicPackageListItem = {
   latestVersion: string | null;
   capabilityTags: string[];
   executesCode: boolean;
-  verificationTier: PackageVerificationTier | null;
+  verificationTier: Doc<"packageSearchDigest">["verificationTier"] | null;
 };
 type PackageDigestLike = Pick<
   Doc<"packageSearchDigest">,
@@ -163,14 +162,6 @@ type PublicPageCursorState = {
   done: boolean;
 };
 const PUBLIC_PAGE_CURSOR_PREFIX = "pkgpage:";
-
-function stringifyId(value: Id<"users"> | Id<"publishers">): string {
-  return value;
-}
-
-function stringifyOptionalId(value: Id<"publishers"> | null | undefined): string | null {
-  return value ? stringifyId(value) : null;
-}
 
 async function runQueryRef<T>(
   ctx: { runQuery: (ref: never, args: never) => Promise<unknown> },
@@ -221,7 +212,6 @@ type PublicPackageDoc = {
   capabilities?: Doc<"packages">["capabilities"];
   verification?: Doc<"packages">["verification"];
   scanStatus?: Doc<"packages">["scanStatus"];
-  stats: Doc<"packages">["stats"];
   createdAt: number;
   updatedAt: number;
 };
@@ -327,7 +317,6 @@ function toPublicPackage(
     capabilities: pkg.capabilities,
     verification: pkg.verification,
     scanStatus: pkg.scanStatus,
-    stats: pkg.stats,
     createdAt: pkg.createdAt,
     updatedAt: pkg.updatedAt,
   };
@@ -2144,11 +2133,6 @@ export const insertReleaseInternal = internalMutation({
       args.channel ??
       (existing?.channel === "private" ? "private" : publisherTrusted ? "official" : "community");
     const nextIsOfficial = nextChannel === "official";
-    const nextOwnerPublisherId = stringifyOptionalId(args.ownerPublisherId ?? null);
-    const nextOwnerUserId = stringifyId(args.ownerUserId);
-    const nextName = args.name;
-    const nextRuntimeId = args.runtimeId ?? null;
-    const nextVersion = args.version;
     if (existing) {
       const existingIsLegacyPersonalPackage =
         !existing.ownerPublisherId &&
@@ -2160,18 +2144,18 @@ export const insertReleaseInternal = internalMutation({
       const existingOwnerKey = existing.ownerPublisherId
         ? `publisher:${existing.ownerPublisherId}`
         : existingIsLegacyPersonalPackage
-          ? `publisher:${nextOwnerPublisherId}`
+          ? `publisher:${args.ownerPublisherId}`
           : `user:${existing.ownerUserId}`;
-      const nextOwnerKey = nextOwnerPublisherId
-        ? `publisher:${nextOwnerPublisherId}`
-        : `user:${nextOwnerUserId}`;
+      const nextOwnerKey = args.ownerPublisherId
+        ? `publisher:${args.ownerPublisherId}`
+        : `user:${args.ownerUserId}`;
       if (existingOwnerKey !== nextOwnerKey) {
         throw new ConvexError("Package already exists and belongs to another publisher");
       }
     }
     if (existing && existing.family !== args.family) {
       throw new ConvexError(
-        `Package "${nextName}" already exists as a ${existing.family}; family changes are not allowed`,
+        `Package "${args.name}" already exists as a ${existing.family}; family changes are not allowed`,
       );
     }
     if (
@@ -2182,7 +2166,7 @@ export const insertReleaseInternal = internalMutation({
       existing.runtimeId !== args.runtimeId
     ) {
       throw new ConvexError(
-        `Package "${nextName}" already exists with plugin id "${existing.runtimeId}"; runtime id changes are not allowed`,
+        `Package "${args.name}" already exists with plugin id "${existing.runtimeId}"; runtime id changes are not allowed`,
       );
     }
     if (args.family === "code-plugin" && args.runtimeId) {
@@ -2191,7 +2175,9 @@ export const insertReleaseInternal = internalMutation({
         .withIndex("by_runtime_id", (q) => q.eq("runtimeId", args.runtimeId))
         .unique();
       if (runtimeCollision && runtimeCollision._id !== existing?._id) {
-        throw new ConvexError(`Plugin id "${nextRuntimeId}" is already claimed by another package`);
+        throw new ConvexError(
+          `Plugin id "${args.runtimeId}" is already claimed by another package`,
+        );
       }
     }
 
@@ -2228,7 +2214,7 @@ export const insertReleaseInternal = internalMutation({
           q.eq("packageId", existing._id).eq("version", args.version),
         )
         .unique();
-      if (releaseExists) throw new ConvexError(`Version ${nextVersion} already exists`);
+      if (releaseExists) throw new ConvexError(`Version ${args.version} already exists`);
     }
     const priorReleases = existing
       ? await ctx.db

@@ -1,11 +1,9 @@
 import { api, internal } from "../_generated/api";
-import { normalizeTextContentType } from "clawhub-schema";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { ActionCtx } from "../_generated/server";
 import { getOptionalApiTokenUserId, requireApiTokenUser } from "../lib/apiTokenAuth";
 import { applyRateLimit, parseBearerToken } from "../lib/httpRateLimit";
 import { parseBooleanQueryParam, resolveBooleanQueryParam } from "../lib/httpUtils";
-import type { LlmEvalDimension } from "../lib/securityPrompt";
 import { publishVersionForUser } from "../skills";
 import {
   MAX_RAW_FILE_BYTES,
@@ -208,7 +206,7 @@ type SkillSecuritySnapshot = {
       normalizedStatus: NormalizedSecurityStatus;
       confidence: string | null;
       summary: string | null;
-      dimensions: LlmEvalDimension[] | null;
+      dimensions: NonNullable<Doc<"skillVersions">["llmAnalysis"]>["dimensions"] | null;
       guidance: string | null;
       findings: string | null;
       model: string | null;
@@ -264,7 +262,7 @@ function mergeSecurityStatuses(statuses: NormalizedSecurityStatus[]) {
 }
 
 function hasLlmDimensionWarnings(
-  dimensions: LlmEvalDimension[] | undefined,
+  dimensions: NonNullable<Doc<"skillVersions">["llmAnalysis"]>["dimensions"] | undefined,
 ) {
   if (!Array.isArray(dimensions)) return false;
   return dimensions.some((dimension) => {
@@ -735,7 +733,7 @@ export async function skillsGetRouterV1Handler(ctx: ActionCtx, request: Request)
             path: file.path,
             size: file.size,
             sha256: file.sha256,
-            contentType: normalizeTextContentType(file.path, file.contentType) ?? null,
+            contentType: file.contentType ?? null,
           })),
           security: security ?? undefined,
         },

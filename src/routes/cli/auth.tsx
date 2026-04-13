@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { flushSync } from "react-dom";
 import { api } from "../../../convex/_generated/api";
 import { Container } from "../../components/layout/Container";
 import { SignInButton } from "../../components/SignInButton";
@@ -14,11 +13,7 @@ export const Route = createFileRoute("/cli/auth")({
   component: CliAuth,
 });
 
-type CliAuthProps = {
-  navigate?: (url: string) => void;
-};
-
-export function CliAuth({ navigate = (url: string) => window.location.assign(url) }: CliAuthProps = {}) {
+function CliAuth() {
   const { isAuthenticated, isLoading, me } = useAuthStatus();
   const { error: authError, clear: clearAuthError } = useAuthError();
   const createToken = useMutation(api.tokens.create);
@@ -31,7 +26,6 @@ export function CliAuth({ navigate = (url: string) => window.location.assign(url
   };
   const [status, setStatus] = useState<string>("Preparing...");
   const [token, setToken] = useState<string | null>(null);
-  const [callbackUrl, setCallbackUrl] = useState<string | null>(null);
   const hasRun = useRef(false);
 
   const redirectUri = search.redirect_uri ?? "";
@@ -57,21 +51,13 @@ export function CliAuth({ navigate = (url: string) => window.location.assign(url
     const run = async () => {
       setStatus("Creating token...");
       const result = await createToken({ label });
+      setToken(result.token);
+      setStatus("Redirecting to CLI...");
       const hash = new URLSearchParams();
       hash.set("token", result.token);
       hash.set("registry", registry);
       hash.set("state", state);
-      const redirectUrl = `${redirectUri}#${hash.toString()}`;
-      // Render the fallback token before attempting navigation so it is
-      // always visible if the browser blocks or fails the http:// redirect
-      // (e.g. ERR_CONNECTION_REFUSED when the CLI server has already shut
-      // down, or Chrome's HTTPS-first mode interfering with localhost).
-      flushSync(() => {
-        setToken(result.token);
-        setCallbackUrl(redirectUrl);
-        setStatus("Redirecting to CLI…");
-      });
-      navigate(redirectUrl);
+      window.location.assign(`${redirectUri}#${hash.toString()}`);
     };
 
     void run().catch((error) => {
@@ -79,7 +65,7 @@ export function CliAuth({ navigate = (url: string) => window.location.assign(url
       setStatus(message);
       setToken(null);
     });
-  }, [createToken, isAuthenticated, label, me, navigate, redirectUri, registry, safeRedirect, state]);
+  }, [createToken, isAuthenticated, label, me, redirectUri, registry, safeRedirect, state]);
 
   if (!safeRedirect) {
     return (
@@ -173,16 +159,8 @@ export function CliAuth({ navigate = (url: string) => window.location.assign(url
             <p className="text-sm text-[color:var(--ink-soft)]">{status}</p>
             {token ? (
               <div className="text-sm text-[color:var(--ink-soft)] overflow-x-auto">
-                <div className="mb-2">
-              If the redirect did not complete, copy this token and run{" "}
-              <code>clawhub login --token &lt;token&gt;</code>:
-            </div>
+                <div className="mb-2">If redirect fails, copy this token:</div>
                 <code className="font-mono text-xs">{token}</code>
-                {callbackUrl ? (
-                  <div className="mt-2">
-                    <a href={callbackUrl}>Retry redirect to CLI</a>
-                  </div>
-                ) : null}
               </div>
             ) : null}
           </CardContent>

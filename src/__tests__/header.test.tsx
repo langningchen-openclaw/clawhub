@@ -5,8 +5,12 @@ import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import Header from "../components/Header";
 
+const siteModeMock = vi.fn(() => "souls");
+const convexQueryMock = vi.fn().mockResolvedValue(0);
+
 vi.mock("@tanstack/react-router", () => ({
   Link: (props: { children: ReactNode }) => <a href="/">{props.children}</a>,
+  useNavigate: () => vi.fn(),
 }));
 
 vi.mock("@convex-dev/auth/react", () => ({
@@ -16,12 +20,14 @@ vi.mock("@convex-dev/auth/react", () => ({
   }),
 }));
 
+const authStatusMock = vi.fn(() => ({
+  isAuthenticated: false,
+  isLoading: false,
+  me: null,
+}));
+
 vi.mock("../lib/useAuthStatus", () => ({
-  useAuthStatus: () => ({
-    isAuthenticated: false,
-    isLoading: false,
-    me: null,
-  }),
+  useAuthStatus: () => authStatusMock(),
 }));
 
 vi.mock("../lib/theme", () => ({
@@ -56,7 +62,7 @@ vi.mock("../lib/roles", () => ({
 
 vi.mock("../lib/site", () => ({
   getClawHubSiteUrl: () => "https://clawhub.ai",
-  getSiteMode: () => "souls",
+  getSiteMode: () => siteModeMock(),
   getSiteName: () => "OnlyCrabs",
 }));
 
@@ -66,6 +72,24 @@ vi.mock("../lib/convexError", () => ({
 
 vi.mock("../lib/gravatar", () => ({
   gravatarUrl: vi.fn(),
+}));
+
+vi.mock("../convex/client", () => ({
+  convexHttp: {
+    query: convexQueryMock,
+  },
+}));
+
+vi.mock("../../convex/_generated/api", () => ({
+  api: {
+    skills: {
+      countPublicSkills: "countPublicSkills",
+    },
+  },
+}));
+
+vi.mock("../lib/numberFormat", () => ({
+  formatCompactStat: (n: number) => String(n),
 }));
 
 vi.mock("../components/ui/dropdown-menu", () => ({
@@ -85,8 +109,22 @@ vi.mock("../components/ui/toggle-group", () => ({
 
 describe("Header", () => {
   it("hides Packages navigation in soul mode on mobile and desktop", () => {
+    siteModeMock.mockReturnValue("souls");
+
     render(<Header />);
 
     expect(screen.queryByText("Packages")).toBeNull();
   });
-});
+
+  it("renders a plain Skills tab without fetching a count", () => {
+    siteModeMock.mockReturnValue("skills");
+    convexQueryMock.mockClear();
+
+    render(<Header />);
+
+    expect(screen.getAllByText("Skills")).toHaveLength(2);
+    expect(screen.getAllByText("Souls")).toHaveLength(2);
+    expect(screen.getAllByText("Users")).toHaveLength(2);
+    expect(screen.getByPlaceholderText("Search skills, plugins, users")).toBeTruthy();
+    expect(convexQueryMock).not.toHaveBeenCalled();
+  });});

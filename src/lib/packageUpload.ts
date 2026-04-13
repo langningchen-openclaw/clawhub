@@ -1,5 +1,4 @@
 import ignore from "ignore";
-import { normalizeTextContentType } from "clawhub-schema/textFiles";
 
 type NormalizePackageUploadPathOptions = {
   stripTopLevelFolder?: boolean;
@@ -140,7 +139,7 @@ export async function buildPackageUploadEntries<TFile extends UploadablePackageF
       size: file.size,
       storageId,
       sha256,
-      contentType: normalizeTextContentType(path, file.type) ?? file.type ?? undefined,
+      contentType: file.type || undefined,
     });
   }
 

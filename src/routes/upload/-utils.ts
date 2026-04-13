@@ -1,17 +1,10 @@
-import {
-  isTextContentType,
-  normalizeTextContentType,
-  TEXT_FILE_EXTENSION_SET,
-} from "clawhub-schema/textFiles";
+import { isTextContentType, TEXT_FILE_EXTENSION_SET } from "clawhub-schema/textFiles";
 import { getUserFacingConvexError } from "../../lib/convexError";
 
 export async function uploadFile(uploadUrl: string, file: File) {
-  const path = file.webkitRelativePath || file.name;
-  const contentType =
-    normalizeTextContentType(path, file.type) ?? file.type ?? "application/octet-stream";
   const response = await fetch(uploadUrl, {
     method: "POST",
-    headers: { "Content-Type": contentType },
+    headers: { "Content-Type": file.type || "application/octet-stream" },
     body: file,
   });
   if (!response.ok) {

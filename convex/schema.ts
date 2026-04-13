@@ -28,6 +28,9 @@ const users = defineTable({
   githubFetchedAt: v.optional(v.number()),
   githubProfileSyncedAt: v.optional(v.number()),
   trustedPublisher: v.optional(v.boolean()),
+  publishedSkills: v.optional(v.number()),
+  totalStars: v.optional(v.number()),
+  totalDownloads: v.optional(v.number()),
   personalPublisherId: v.optional(v.id("publishers")),
   requiresModerationAt: v.optional(v.number()),
   requiresModerationReason: v.optional(v.string()),
@@ -40,7 +43,8 @@ const users = defineTable({
 })
   .index("email", ["email"])
   .index("phone", ["phone"])
-  .index("handle", ["handle"]);
+  .index("handle", ["handle"])
+  .index("by_active_handle", ["deletedAt", "deactivatedAt", "handle"]);
 
 const publishers = defineTable({
   kind: v.union(v.literal("user"), v.literal("org")),
@@ -384,8 +388,7 @@ const souls = defineTable({
   .index("by_slug", ["slug"])
   .index("by_owner", ["ownerUserId"])
   .index("by_owner_publisher", ["ownerPublisherId"])
-  .index("by_updated", ["updatedAt"])
-  .index("by_active_updated", ["softDeletedAt", "updatedAt"]);
+  .index("by_updated", ["updatedAt"]);
 
 const skillVersions = defineTable({
   skillId: v.id("skills"),

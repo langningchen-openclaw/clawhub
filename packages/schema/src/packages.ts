@@ -57,14 +57,6 @@ export const PackageVerificationSummarySchema = type({
 });
 export type PackageVerificationSummary = (typeof PackageVerificationSummarySchema)[inferred];
 
-export const PackageStatsSchema = type({
-  downloads: "number",
-  installs: "number",
-  stars: "number",
-  versions: "number",
-});
-export type PackageStats = (typeof PackageStatsSchema)[inferred];
-
 export const PackageVtAnalysisSchema = type({
   status: "string",
   verdict: "string?",
@@ -198,7 +190,6 @@ export const ApiV1PackageResponseSchema = type({
     compatibility: PackageCompatibilitySchema.or("null").optional(),
     capabilities: PackageCapabilitySummarySchema.or("null").optional(),
     verification: PackageVerificationSummarySchema.or("null").optional(),
-    stats: PackageStatsSchema.optional(),
   }).or("null"),
   owner: type({
     handle: "string|null",
