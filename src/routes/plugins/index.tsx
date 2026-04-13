@@ -72,6 +72,7 @@ export const Route = createFileRoute("/plugins/")({
       rateLimited: false,
       retryAfterSeconds: null,
       apiError: items.length === 0 && !deps.q && !deps.family && !deps.verified && !deps.executesCode,
+    };
   },
   component: PluginsIndex,
 });
