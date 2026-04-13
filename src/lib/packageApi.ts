@@ -331,7 +331,7 @@ export async function fetchPluginCatalog(params: {
   return await fetchJson<PluginCatalogResult>(url);
 }
 
-export async function fetchPackageDetail(name: string) {
+export async function fetchPackageDetail(name: string): Promise<PackageDetailResponse> {
   const url = await packageApiUrl(`${ApiRoutes.packages}/${encodeURIComponent(name)}`);
   const response = await packageFetch(url, "application/json");
   if (response.status === 404) {
