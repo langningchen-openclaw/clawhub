@@ -46,11 +46,10 @@ vi.mock("../lib/theme", () => ({
   applyTheme: vi.fn(),
   THEME_OPTIONS: [
     { value: "claw", label: "Claw", description: "" },
-    { value: "knot", label: "Knot", description: "" },
-    { value: "dash", label: "Dash", description: "" },
+    { value: "hub", label: "Hub", description: "" },
   ],
   useThemeMode: () => ({
-    theme: "dash",
+    theme: "hub",
     mode: "system",
     setTheme: setThemeMock,
     setMode: setModeMock,
@@ -119,15 +118,14 @@ describe("Header", () => {
 
     expect(screen.getByText("Theme")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Claw" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Knot" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Dash" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Hub" })).toBeTruthy();
     expect(screen.getAllByText("Skills")).toHaveLength(1);
     expect(screen.getAllByText("Souls")).toHaveLength(1);
     expect(screen.getAllByText("Users")).toHaveLength(1);
     expect(screen.getByPlaceholderText("Search skills, plugins, users")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Knot" }));
-    expect(setThemeMock).toHaveBeenCalledWith("knot");
+    fireEvent.click(screen.getByRole("button", { name: "Hub" }));
+    expect(setThemeMock).toHaveBeenCalledWith("hub");
 
     fireEvent.click(screen.getByRole("button", { name: "Open menu" }));
 

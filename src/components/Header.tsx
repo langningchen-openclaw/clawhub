@@ -254,6 +254,7 @@ export default function Header() {
                 </div>
               </div>
               <ToggleGroup
+                className="theme-mode-toggle"
                 type="single"
                 value={mode}
                 onValueChange={(value) => {

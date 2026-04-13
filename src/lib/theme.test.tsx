@@ -14,8 +14,8 @@ describe("theme", () => {
         <button type="button" onClick={() => setMode("dark")}>
           dark
         </button>
-        <button type="button" onClick={() => setFamily("dash")}>
-          dash
+        <button type="button" onClick={() => setFamily("hub")}>
+          hub
         </button>
       </div>
     );
@@ -56,9 +56,9 @@ describe("theme", () => {
 
     window.localStorage.setItem(
       "clawhub-theme-selection",
-      JSON.stringify({ theme: "dash", mode: "light" }),
+      JSON.stringify({ theme: "hub", mode: "light" }),
     );
-    expect(getStoredThemeSelection()).toEqual({ theme: "dash", mode: "light" });
+    expect(getStoredThemeSelection()).toEqual({ theme: "hub", mode: "light" });
 
     window.localStorage.clear();
     window.localStorage.setItem("clawhub-theme", "dark");
@@ -66,20 +66,20 @@ describe("theme", () => {
 
     window.localStorage.clear();
     window.localStorage.setItem("clawdhub-theme", "openknot");
-    expect(getStoredThemeSelection()).toEqual({ theme: "knot", mode: "dark" });
+    expect(getStoredThemeSelection()).toEqual({ theme: "claw", mode: "dark" });
   });
 
   it("applies family and resolved mode to the document", () => {
-    applyTheme("dark", "dash");
+    applyTheme("dark", "hub");
     expect(document.documentElement.dataset.theme).toBe("dark");
     expect(document.documentElement.dataset.themeResolved).toBe("dark");
-    expect(document.documentElement.dataset.themeFamily).toBe("dash");
+    expect(document.documentElement.dataset.themeFamily).toBe("hub");
     expect(document.documentElement.classList.contains("dark")).toBe(true);
 
-    applyTheme("light", "knot");
+    applyTheme("light", "claw");
     expect(document.documentElement.dataset.theme).toBe("light");
     expect(document.documentElement.dataset.themeResolved).toBe("light");
-    expect(document.documentElement.dataset.themeFamily).toBe("knot");
+    expect(document.documentElement.dataset.themeFamily).toBe("claw");
     expect(document.documentElement.classList.contains("dark")).toBe(false);
   });
 
@@ -104,15 +104,15 @@ describe("theme", () => {
     expect(screen.getByTestId("mode").textContent).toBe("system");
     expect(screen.getByTestId("family").textContent).toBe("claw");
 
-    fireEvent.click(screen.getByRole("button", { name: "dash" }));
+    fireEvent.click(screen.getByRole("button", { name: "hub" }));
     fireEvent.click(screen.getByRole("button", { name: "dark" }));
 
     await waitFor(() => {
-      expect(document.documentElement.dataset.themeFamily).toBe("dash");
+      expect(document.documentElement.dataset.themeFamily).toBe("hub");
       expect(document.documentElement.dataset.themeResolved).toBe("dark");
     });
 
     expect(window.localStorage.getItem("clawhub-theme")).toBe("dark");
-    expect(window.localStorage.getItem("clawhub-theme-name")).toBe("dash");
+    expect(window.localStorage.getItem("clawhub-theme-name")).toBe("hub");
   });
 });

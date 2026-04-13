@@ -8,7 +8,7 @@ import {
   type CustomThemeData,
 } from './customTheme';
 
-export type ThemeName = 'claw' | 'knot' | 'dash';
+export type ThemeName = 'claw' | 'hub';
 export type ThemeMode = 'system' | 'light' | 'dark';
 export type ResolvedTheme = 'light' | 'dark';
 
@@ -30,20 +30,15 @@ export const THEME_OPTIONS: Array<{ value: ThemeName; label: string; description
     description: 'OpenClaw black, white, and red.',
   },
   {
-    value: 'knot',
-    label: 'Knot',
-    description: 'OpenKnot midnight blue with electric cyan.',
-  },
-  {
-    value: 'dash',
-    label: 'Dash',
-    description: 'ClawDash monochrome index with terminal-style contrast.',
+    value: 'hub',
+    label: 'Hub',
+    description: 'Marketplace monochrome index with terminal-style contrast.',
   },
 ];
 
 export const THEME_FAMILY_OPTIONS = THEME_OPTIONS;
 
-const VALID_THEME_NAMES = new Set<ThemeName>(['claw', 'knot', 'dash']);
+const VALID_THEME_NAMES = new Set<ThemeName>(['claw', 'hub']);
 const VALID_THEME_MODES = new Set<ThemeMode>(['system', 'light', 'dark']);
 
 const LEGACY_MAP: Record<string, ThemeSelection> = {
@@ -52,12 +47,12 @@ const LEGACY_MAP: Record<string, ThemeSelection> = {
   system: { theme: 'claw', mode: 'system' },
   defaultTheme: { theme: 'claw', mode: 'dark' },
   docsTheme: { theme: 'claw', mode: 'light' },
-  lightTheme: { theme: 'knot', mode: 'dark' },
-  landingTheme: { theme: 'knot', mode: 'dark' },
-  newTheme: { theme: 'knot', mode: 'dark' },
-  openknot: { theme: 'knot', mode: 'dark' },
-  fieldmanual: { theme: 'dash', mode: 'dark' },
-  clawdash: { theme: 'dash', mode: 'light' },
+  lightTheme: { theme: 'claw', mode: 'dark' },
+  landingTheme: { theme: 'claw', mode: 'dark' },
+  newTheme: { theme: 'claw', mode: 'dark' },
+  openknot: { theme: 'claw', mode: 'dark' },
+  fieldmanual: { theme: 'hub', mode: 'dark' },
+  clawdash: { theme: 'hub', mode: 'light' },
 };
 
 function parseThemeSelection(themeRaw: unknown, modeRaw: unknown): ThemeSelection {
