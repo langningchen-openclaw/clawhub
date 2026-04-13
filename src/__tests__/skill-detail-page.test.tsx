@@ -414,9 +414,7 @@ describe("SkillDetailPage", () => {
 
     expect(
       (
-        await screen.findAllByText(
-          /free to use, modify, and redistribute\. no attribution required\./i,
-        )
+        await screen.findAllByText(/MIT-0/i)
       ).length,
     ).toBeGreaterThan(0);
     expect(

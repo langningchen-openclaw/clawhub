@@ -3,10 +3,7 @@ import { useAction, useQuery } from "convex/react";
 import {
   ArrowRight,
   Code2,
-  Download,
-  Flame,
   Ghost,
-  Package,
   Search,
   Sparkles,
   Star,
@@ -21,7 +18,6 @@ import { SkillListItem } from "../components/SkillListItem";
 import { SkillStatsTripletLine } from "../components/SkillStats";
 import { SoulCard } from "../components/SoulCard";
 import { SoulStatsTripletLine } from "../components/SoulStats";
-import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { UserBadge } from "../components/UserBadge";
 import { convexHttp } from "../convex/client";

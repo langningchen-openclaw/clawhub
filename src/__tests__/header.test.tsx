@@ -117,7 +117,7 @@ describe("Header", () => {
 
     render(<Header />);
 
-    expect(screen.getByText("Theme")).toBeTruthy();
+    expect(screen.getByLabelText("Theme family")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Claw" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Hub" })).toBeTruthy();
     expect(screen.getAllByText("Skills")).toHaveLength(1);

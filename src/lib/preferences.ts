@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useSyncExternalStore } from "react";
 
 const PREFERENCES_KEY = "clawhub-preferences";
 
