@@ -291,7 +291,7 @@ export function Settings() {
             {/* Theme Section */}
             <div className="space-y-3">
               <Label id="theme" className="text-sm font-semibold text-[color:var(--ink)]">Theme</Label>
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 {THEME_FAMILY_OPTIONS.map((option) => (
                   <button
                     key={option.value}
